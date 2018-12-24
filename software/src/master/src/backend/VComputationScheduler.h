@@ -205,10 +205,10 @@ public:
 
 //  Tuning Parameter Access
 public:
-    size_t blockingWait () {
+    size_t blockingWait () const {
 	return m_pTheMan->blockingWait ();
     }
-    size_t pollingInterval () {
+    size_t pollingInterval () const {
 	return m_pTheMan->pollingInterval ();
     }
 

@@ -423,7 +423,6 @@ void IOMDriver::Wait () {
 	    Batchvision::BlockingWait (), rHandledEvents
 	) && !rHandledEvents
     ) {
-	M_ProcessGRMRequests ();
     }
 }
 

@@ -412,20 +412,8 @@ void VComputationScheduler::Manager::DoEverything () {
 		m_pActiveScheduler.clear ();
 	    }
 
-	//  ... perform some maintenance tasks ...
-	    M_ProcessGRMRequests ();
-
 	//  ... and re-fill the queues, ...
-	    if (m_pQueueHead.isntEmpty ())
-		iEP.doEvents (0);
-	    else {
-		bool bEventsHandled = false;
-    		while (m_cTopTasks > 0 && m_pQueueHead.isEmpty () && iEP.doEvents (m_sBlockingWait, bEventsHandled)) {
-		    if (!bEventsHandled) {
-			M_ProcessGRMRequests ();
-		    }
-		}
-	    }
+            iEP.doEvents (m_pQueueHead.isntEmpty () ? 0 : Vca_InfiniteWait);
 	} while (s_bQueueShutdownRules ? m_pQueueHead.isntEmpty () : m_cTopTasks > 0 && !m_bStopped );
     } UNWIND_EndTryAndCatch;
 }
