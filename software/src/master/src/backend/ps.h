@@ -27,15 +27,6 @@ PublicVarDecl unsigned int	PS_SegmentScanCount,
 				PS_SegmentReclamationMaximum,
 				PS_PCTPrivatizations;
 
-
-/**********************************************
- **********************************************
- *****  Global Resource Manager Routines  *****
- **********************************************
- **********************************************/
-
-PublicFnDecl int PS_GRMRequestsArePending ();
-
 /*******************************
  *******************************
  *****  Creation Routines  *****

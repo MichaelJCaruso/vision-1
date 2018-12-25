@@ -2314,15 +2314,6 @@ PublicFnDef unsigned int M_ReclaimSegments () {
 PublicFnDef unsigned int M_ReclaimAllSegments () {
     return ENVIR_Session ()->ReclaimAllSegments ();
 }
-
-/*********************************
- *****  GRM Request Handler  *****
- *********************************/
-
-PublicFnDef void M_ProcessGRMRequests () {
-    if (PS_GRMRequestsArePending ())
-	M_ReclaimSegments ();
-}
 
 
 /**************************

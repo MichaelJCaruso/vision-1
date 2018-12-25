@@ -1573,10 +1573,6 @@ int main (int argc, char *argv[]) {
 	(evalue = strtoul (estring, (char **)NULL, 0)) > 0
     ) SmallLargeThreshold = evalue;
 
-    VkMemory::StartGRM (
-	argv[0], NilOf (char const*), NilOf (VkMemoryTraceCallback), SignalUnixError
-    );
-
     AttachNetwork (pNDF);
 
     Network.VerifyNetworkConnectivity ();

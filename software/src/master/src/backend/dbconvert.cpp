@@ -3831,14 +3831,6 @@ int main (int argc, char* argv[]) {
 /*****  ... acquire and cache program options, ...  *****/
     GOPT_AcquireOptions (argc, argv);
 
-/*****  ... Global Reclamation Manager Initialization, ...  *****/
-    VkMemory::StartGRM (
-	argv[0],
-	GOPT_GetValueOption ("LogFacility"),
-	(VkMemoryTraceCallback) printf, 
-	(VkMemoryErrorCallback) RaiseSystemException
-    );
-
     MessageChunkSize = atoi (GOPT_GetValueOption ("MessageChunkSize"));
     if (0 == MessageChunkSize) MessageChunkSize = 1024 * 1024;
 

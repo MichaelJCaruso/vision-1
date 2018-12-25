@@ -1575,9 +1575,6 @@ int main (
 	return ErrorExitValue;
     }
 
-/*****  ... Global Reclamation Manager Initialization, ...  *****/
-    VkMemory::StartGRM (argv[0]);
-
     char const *fileprefix;
     for (i = 1,
 	 totalFileCount = 0;

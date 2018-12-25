@@ -60,16 +60,6 @@ public:
 	return g_cMappedFiles;
     }
 
-//  GRM Management
-public:
-    static void StartGRM (
-	char const		*callerName,
-	char const		*logFacility = 0,
-	VkMemoryTraceCallback	traceFn = 0,
-	VkMemoryErrorCallback	errorFn = 0
-    );
-    static void StopGRM ();
-
 //  Construction
 public:
     void Initialize () {
@@ -134,18 +124,6 @@ protected:
     HANDLE		m_iHandle;
 #endif
 };
-
-/**********************
- **********************
- *****  Behavior  *****
- **********************
- **********************/
-
-#if defined(__hp9000s800) || defined(__hp9000s700)
-
-PublicFnDef int VkMemory_GRMRequestCount ();
-
-#endif
 
 
 #endif

@@ -37,8 +37,6 @@ PublicFnDecl unsigned int M_ReclaimSegments ();
 
 PublicFnDecl unsigned int M_ReclaimAllSegments ();
 
-PublicFnDecl void M_ProcessGRMRequests ();
-
 PublicFnDecl char const* M_UpdateStatusDescription (
     PS_UpdateStatus updateStatus, char const *alternateSuccessText
 );

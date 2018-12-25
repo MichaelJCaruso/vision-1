@@ -155,9 +155,6 @@ int main (
     if (1 == LAY_itemCount (layout))
 	return NormalExitValue;
 
-/*****  ... Global Reclamation Manager Initialization, ...  *****/
-    VkMemory::StartGRM (argv[0]);
-
     if (!mapping.Map (filename, 0, LAY_fileSize (layout), VkMemory::Share_Private)) {
 	display_error("File Mapping Error");
 	return ErrorExitValue;

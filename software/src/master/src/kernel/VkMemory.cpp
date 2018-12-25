@@ -512,275 +512,6 @@ bool VkMemory::Allocate (size_t regionSize, bool shared) {
 }
 
 
-/**********************************************************
- **********************************************************
- *****  Global Reclamation Manager - HP9000s700 Only  *****
- **********************************************************
- **********************************************************/
-
-#if defined(__hp9000s800) || defined(__hp9000s700)
-
-/*****************************************************
- *****  Global Reclamation Manager Declarations  *****
- *****************************************************/
-
-#define GRMMutexIndex		0
-#define GRMReplyCountIndex	1
-#define GRMRequestCountIndex	2
-#define GRMProcessCountIndex	3
-
-#define GRMSemaphoreCount (GRMProcessCountIndex + 1)
-#define GRMInitialized    (GRMID >= 0)
-
-PrivateFnDef void defaultErrorHandler (char const *pMessage) {
-    printf (pMessage);
-    exit (1);
-}
-
-PrivateVarDef int GRMID = -1;
-PrivateVarDef int TracingGRMActivity = false;
-
-PrivateVarDef VkMemoryTraceCallback TraceCallBack = (VkMemoryTraceCallback) printf;
-PrivateVarDef VkMemoryErrorCallback ErrorCallBack = defaultErrorHandler;
-
-
-/************************************************
- *****  Global Reclamation Manager Display  *****
- ************************************************/
-
-PrivateFnDef void GRMDisplay () {
-    int	i;
-
-    TraceCallBack ("+++ GRM Semaphore Value: ");
-    for (i = 0; i < GRMSemaphoreCount; i++) TraceCallBack (
-	" %d(%d)", semctl (GRMID, i, GETVAL), semctl (GRMID, i, GETNCNT)
-    );
-    TraceCallBack ("\n");
-}
-
-
-/***************************************************
- *****  Global Reclamation Manager Adjustment  *****
- ***************************************************/
-
-PrivateFnDef int GRMAdjust (int semNumber, int semAdjustment, int semFlags) {
-    struct sembuf semop1[1];
-
-    semop1[0].sem_num  = semNumber;
-    semop1[0].sem_op   = semAdjustment;
-    semop1[0].sem_flg  = semFlags;
-
-    return semop (GRMID, semop1, 1);
-}
-
-
-/****************************************************************
- *****  Global Reclamation Manager Acquisition and Release  *****
- ****************************************************************/
-
-PrivateFnDef void GRMAcquire (int semNumber, int semAdjustment, int semFlags) {
-    struct sembuf semop1[2];
-
-    semop1[0].sem_num	= GRMMutexIndex;
-    semop1[0].sem_op	= -1;
-    semop1[0].sem_flg	= SEM_UNDO;
-    semop1[1].sem_num	= semNumber;
-    semop1[1].sem_op	= semAdjustment;
-    semop1[1].sem_flg	= semFlags;
-
-    if (semop (GRMID, semop1, 2) < 0 && errno != EAGAIN) ErrorCallBack (
-	"Global Reclamation Manager Lock Acquistion"
-    );
-}
-
-PrivateFnDef void GRMRelease () {
-    struct sembuf semop1[1];
-
-    semop1[0].sem_num	= GRMMutexIndex;
-    semop1[0].sem_op	= 1;
-    semop1[0].sem_flg	= SEM_UNDO;
-
-    if (semop (GRMID, semop1, 1) < 0) ErrorCallBack (
-	"Global Reclamation Manager Lock Release"
-    );
-}
-
-
-/**********************************************
- *****  Global Reclamation Manager Query  *****
- **********************************************/
-
-PrivateFnDef int GRMReplyCount () {
-    int count = semctl (GRMID, GRMReplyCountIndex, GETVAL);
-    if (count < 0) ErrorCallBack (
-	"Global Reclamation Manager Reply Count Access"
-    );
-    return count;
-}
-
-PrivateFnDef int GRMRequestCount () {
-    int count = semctl (GRMID, GRMRequestCountIndex, GETVAL);
-    if (count < 0) ErrorCallBack (
-	"Global Reclamation Manager Request Count Access"
-    );
-    return count;
-}
-
-PublicFnDef int VkMemory_GRMRequestCount () {
-    return GRMInitialized ? GRMRequestCount () : 0;
-}
-
-PrivateFnDef int GRMProcessCount () {
-    int count = semctl (GRMID, GRMProcessCountIndex, GETVAL);
-    if (count < 0) ErrorCallBack (
-	"Global Reclamation Manager Process Count Access"
-    );
-    return count;
-}
-
-PrivateFnDef int GRMPotentialServerCount () {
-    return GRMProcessCount () - GRMRequestCount () - 1;
-}
-
-
-/**********************************************************
- *****  Global Reclamation Manager Reclamation Reply  *****
- **********************************************************/
-
-PrivateFnDef void GRMReportRecovery () {
-    int reply = GRMRequestCount () - GRMReplyCount ();
-
-    if (reply <= 0)
-	return;
-
-    if (TracingGRMActivity) {
-	TraceCallBack (
-	    "+++ Reply To %d Request%s Generated\n", reply, reply > 1 ? "s": ""
-	);
-	GRMDisplay ();
-    }
-    if (GRMAdjust (GRMReplyCountIndex, reply, 0) < 0) ErrorCallBack (
-	"Global Reclamation Manager Report Generation"
-    );
-}
-
-
-/************************************************************
- *****  Global Reclamation Manager Reclamation Request  *****
- ************************************************************/
-
-PrivateFnDef void GRMRequestRecovery () {
-    if (GRMPotentialServerCount () > 0) {
-	GRMAdjust	  (GRMRequestCountIndex, 1, SEM_UNDO);
-	GRMAcquire	  (GRMReplyCountIndex, -1, 0);
-	GRMAdjust	  (GRMRequestCountIndex, -1, SEM_UNDO | IPC_NOWAIT);
-	GRMRelease	  ();
-	GRMReportRecovery ();
-	if (TracingGRMActivity) {
-	    TraceCallBack (	"+++ Reply Received By Process %d\n", getpid ());
-	    GRMDisplay ();
-	}
-    }
-}
-#endif
-
-
-/*******************************************************
- *****  Global Reclamation Manager Initialization  *****
- *******************************************************/
-
-void VkMemory::StartGRM (
-    char const			*callerName,
-    char const			*logFacility,
-    VkMemoryTraceCallback	traceFn,
-    VkMemoryErrorCallback	errorFn
-) {
-#if defined(__hp9000s800) || defined(__hp9000s700)
-    key_t			semkey;
-    static bool			initializationAttempted = false;
-    int				facility = LOG_USER;
-
-/*****  Check for multiple initialization calls...  *****/
-    if (initializationAttempted)
-	return;
-
-    initializationAttempted = true;
-    char const* estring = logFacility;
-    if (IsNil (estring))
-	estring = getenv ("VisionGRMlogFacility");
-    if (IsntNil (estring)) {
-	if (0 == strcmp (estring, "local0")) facility = LOG_LOCAL0;
-	else if (0 == strcmp (estring, "local1")) facility = LOG_LOCAL1;
-	else if (0 == strcmp (estring, "local2")) facility = LOG_LOCAL2;
-	else if (0 == strcmp (estring, "local3")) facility = LOG_LOCAL3;
-	else if (0 == strcmp (estring, "local4")) facility = LOG_LOCAL4;
-	else if (0 == strcmp (estring, "local5")) facility = LOG_LOCAL5;
-	else if (0 == strcmp (estring, "local6")) facility = LOG_LOCAL6;
-	else if (0 == strcmp (estring, "local7")) facility = LOG_LOCAL7;
-	else if (0 == strcmp (estring, "daemon")) facility = LOG_DAEMON;
-    }
-/*  printf ("\"%s\" (%d)\n", estring, facility);  */
-    if (IsntNil (callerName)) openlog (callerName, LOG_PID, facility);
-    else 		      openlog ("VkMemory", LOG_PID, facility);
-    if (IsntNil (estring = getenv ("VisionGRMEnabled")) && 0 == atoi (estring)) {
-	syslog (LOG_INFO, "Not participating in GRM");
-	return;
-    }
-
-    if (IsntNil (estring = getenv ("VisionGRMTrace")))
-	TracingGRMActivity = atoi (estring) ? true : false;
-
-
-    if (IsntNil (traceFn))
-	TraceCallBack = traceFn;
-    if (IsntNil (errorFn))
-	ErrorCallBack = errorFn;
-    
-/*****  Create or access the semaphore...  *****/
-    semkey = ftok ("/", 'V');
-    GRMID = semget (semkey, GRMSemaphoreCount, IPC_CREAT | IPC_EXCL | 0666);
-    if (GRMInitialized) {
-	if (TracingGRMActivity) TraceCallBack ("+++ GRM Semaphore Created\n");
-	if (semctl (GRMID, 0, SETVAL, 1) < 0) ErrorCallBack (
-	    "Global Reclamation Manager Semaphore Initialization"
-	);
-    }
-    else if ((GRMID = semget (semkey, GRMSemaphoreCount, 0666)) < 0
-    ) ErrorCallBack ("Global Reclamation Manager Semaphore Access");
-
-/*****  ... and attach this process to the semaphore ...  *****/
-    GRMAcquire (GRMProcessCountIndex, 1, SEM_UNDO);
-
-/*****  ... arrange for reply to be generated at exit ...  *****/
-    while (GRMAdjust (GRMReplyCountIndex, -1, SEM_UNDO | IPC_NOWAIT) < 0) {
-	if (errno != EAGAIN) ErrorCallBack (
-	    "Global Reclamation Manager Initial Reply Count Decrement"
-	);
-	if (GRMAdjust (GRMReplyCountIndex, 1, 0) < 0) ErrorCallBack (
-	    "Global Reclamation Manager Initial Reply Count Increment"
-	);
-    }
-
-    GRMRelease ();
-    if (TracingGRMActivity)
-	GRMDisplay ();
-#endif
-}
-
-/*************************************************
- *****  Global Reclamation Manager Shutdown  *****
- *************************************************/
-
-void VkMemory::StopGRM () {
-#if defined(__hp9000s800) || defined(__hp9000s700)
-    /** needed only if the process is doing an exec rather than an exit **/
-    GRMAcquire (GRMProcessCountIndex, -1, SEM_UNDO);
-    GRMAdjust  (GRMReplyCountIndex, 1, SEM_UNDO);
-    GRMRelease ();
-#endif
-}
-
-
 /*******************************
  *******************************
  *****  MapImplementation  *****
@@ -1234,23 +965,6 @@ bool VkMemory::Map (char const *pPathName, bool fReadOnly, Share xShare) {
     if (TryAgain == result && mappingsReclaimed ()) {
 	result = Map (pPathName, fReadOnly, 1, 0, xShare);
     }
-
-#if defined(__hp9000s800) || defined(__hp9000s700)
-    while (TryAgain == result && GRMInitialized && GRMPotentialServerCount () > 0) {
-	if (TracingGRMActivity) {
-	    TraceCallBack (	"+++ GRM wait for %s\n", pPathName);
-	}
-
-	GRMRequestRecovery ();
-	result = Map (pPathName, fReadOnly, 1, 0, xShare);
-    }
-    if (Success != result && GRMInitialized) {
-	int savedError = errno;
-	syslog (LOG_WARNING, "GRM (%m) --> %s", pPathName);
-	errno = savedError;
-    }
-#endif
-
     return result == Success ? true : false;
 }
 
@@ -1266,22 +980,6 @@ bool VkMemory::Map (char const *pPathName, size_t sMultiplier, size_t sIncrement
     if (TryAgain == result && mappingsReclaimed ()) {
 	result = Map (pPathName, false, sMultiplier, sIncrement, xShare);
     }
-
-#if defined(__hp9000s800) || defined(__hp9000s700)
-    while (TryAgain == result && GRMInitialized && GRMPotentialServerCount () > 0) {
-	if (TracingGRMActivity) {
-	    TraceCallBack (	"+++ GRM wait for %s\n", pPathName);
-	}
-
-	GRMRequestRecovery ();
-	result = Map (pPathName, false, sMultiplier, sIncrement, xShare);
-    }
-    if (Success != result && GRMInitialized) {
-	int savedError = errno;
-	syslog (LOG_WARNING, "GRM (%m) --> %s", pPathName);
-	errno = savedError;
-    }
-#endif
     return result == Success ? true : false;
 }
 
@@ -1375,10 +1073,6 @@ void VkMemory::Destroy () {
 	deallocate (m_pRegion);
 #endif
 
-#if defined(__hp9000s800) || defined(__hp9000s700)
-	if (GRMInitialized)
-	    GRMReportRecovery ();
-#endif
 	m_pRegion = NilOf (void *);
 	m_sRegion = 0;
 

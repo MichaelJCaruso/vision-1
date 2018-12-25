@@ -439,12 +439,6 @@ void Batchvision::restartProcess () {
 #   if defined (_WIN32)
     execvp (arg0(), (char const* const*)argv());
 #   else
-
-#   if defined(__hp9000s800) || defined (__hp9000s700)
-    M_ReclaimAllSegments ();
-#   endif
-    VkMemory::StopGRM ();
-
     execvp (arg0(), argv());
 #   endif
 

@@ -293,9 +293,6 @@ int main (
     GOPT_SeekExtraArgument(0, 0);
     char const *filename = GOPT_GetExtraArgument();
 
-/*****  ... Global Reclamation Manager Initialization, ...  *****/
-    VkMemory::StartGRM (argv[0]);
-
     if (IsNil (layout = read_layout(filename))) {
         display_error("Error reading layout file");
 	return ErrorExitValue;

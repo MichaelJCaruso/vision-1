@@ -57,9 +57,6 @@ static void CheckSum (char const *file, checksum_t *cs1, checksum_t *cs2) {
 }
 
 int main (int argc, char *argv[]) {
-/*****  ... Global Reclamation Manager Initialization, ...  *****/
-    VkMemory::StartGRM (argv[0]);
-
     int mismatchCount = 0;
     for (int argi = 1; argi < argc; argi++) {
 	if (strcmp (argv[argi], "-p") == 0)

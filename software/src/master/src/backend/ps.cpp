@@ -1421,19 +1421,6 @@ bool PS_AND::CurrentUserIsInRightsList () {
 }
 
 
-/******************************************************
- *****  Global Resource Manager Public Interface  *****
- ******************************************************/
-
-PublicFnDef int PS_GRMRequestsArePending () {
-#if defined(__hp9000s800) || defined(__hp9000s700)
-    return VkMemory_GRMRequestCount () > 0;
-#else
-    return false;
-#endif
-}
-
-
 /**************************************
  **************************************
  *****  Segment Access Utilities  *****
@@ -5799,17 +5786,6 @@ PublicFnDef void PS_Initialize () {
     );
     PS_TID_Low		(TransactionId) = gethostid ();
     PS_TID_Sequence	(TransactionId) = 0;
-
-/*---------------------------------------------------------------------------
- *****  Global Reclamation Manager Initialization
- *---------------------------------------------------------------------------
- */
-    VkMemory::StartGRM (
-	"batchvision",
-	NilOf (char const *),
-	(VkMemoryTraceCallback)IO_printf,
-	(VkMemoryErrorCallback)SignalUnixError
-    );
 }
 
 
