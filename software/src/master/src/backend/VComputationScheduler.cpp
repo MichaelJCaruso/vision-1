@@ -413,7 +413,15 @@ void VComputationScheduler::Manager::DoEverything () {
 	    }
 
 	//  ... and re-fill the queues, ...
-            iEP.doEvents (m_pQueueHead.isntEmpty () ? 0 : Vca_InfiniteWait);
+//          iEP.doEvents (m_pQueueHead.isntEmpty () ? 0 : Vca_InfiniteWait);
+
+	    if (m_pQueueHead.isntEmpty ())
+		iEP.doEvents (0);
+	    else {
+		bool bEventsHandled = false;
+		while (m_cTopTasks > 0 && m_pQueueHead.isEmpty () && iEP.doEvents (m_sBlockingWait, bEventsHandled)) {
+		}
+	    }
 	} while (s_bQueueShutdownRules ? m_pQueueHead.isntEmpty () : m_cTopTasks > 0 && !m_bStopped );
     } UNWIND_EndTryAndCatch;
 }
