@@ -495,20 +495,21 @@ namespace Vca {
     };
 
     /**
-     * Used in conjunction with the VBSConsumer class. Its
-     * used to stall the bytestream with this VCheckPoint object inserted
-     * in the VCheckPoint queue maintained by VBS and then restart the bytestream 
-     * operations by releasing/removing this VCheckPoint object from the queue.
+     * Checkpoints are used to coordinate output ordering on independent VBSConsumer
+     * streams and were explicitly created to deal with the problem of synchronizing
+     * concurrent independent writes to 'stdout' and 'stderr'.
      *
-     *	    VCheckPoints can be either BLOCKING or NONBLOCKING. Blocking Checkpoints in
-     * a VBS CheckPoint queue implies that the operation of the bytestream
-     * cant proceed unless the blocking checkpoint is released. A nonblocking
-     * checkpoint on the other hand doesnt require it to be released by an external
-     * "release" call, it is released automatically when it is being triggered.
-     *	    Each VCheckPoint has a trigger object associated with it which is
-     * used to perform operations on reaching the checkpoint say for e.g. releasing
-     * another blocking checkpoint which is dependant on the completion of this
-     * checkpoint.
+     * A checkpoint monitors the output progress of the consumer (writer) byte stream
+     * to which it is attached.  In particular, it reports via a triggered callback
+     * when the byte stream has successfully written the data it had committed to
+     * write when the checkpoint was created.  A checkpoint can be either BLOCKING or
+     * NONBLOCKING. The presence of a blocking checkpoint in a consumer byte stream
+     * requires the byte stream to output up to but no more than the data it had in
+     * its buffers at the time of the checkpoint's creation.  While they trigger their
+     * callback when the required data has been written, blocking checkpoints must be
+     * explicitly released before their associated byte stream can continue writing.
+     * As expected, NONBLOCKING checkpoints are free to continue writing data after
+     * triggering their callbacks.
      */
     class Vca_API VCheckPoint: public VRolePlayer {
 	DECLARE_CONCRETE_RTTLITE (VCheckPoint, VRolePlayer);

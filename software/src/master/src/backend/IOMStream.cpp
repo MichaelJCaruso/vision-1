@@ -870,7 +870,7 @@ void IOMStreamConsumer::Close () {
 
 void IOMStreamConsumer::createCheckPoint (bool bBlocking, Vca::ITrigger *pTrigger) {
     if (m_pBS) {
-	VReference<Vca::VCheckPoint> pCheckPoint (
+	Vca::VCheckPoint::Reference const pCheckPoint (
 	    new Vca::VCheckPoint (
 		m_pActiveBuffer->ConsumerRegionSize () + m_pBS->transferPending (), bBlocking, pTrigger
 	    )

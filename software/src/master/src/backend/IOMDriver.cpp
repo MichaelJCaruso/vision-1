@@ -492,56 +492,61 @@ size_t __cdecl IOMDriver::Report (size_t sData, char const* fmt, ...) {
 
 /******************************************************************************
  * Routine VReport:
- *  This VReport method has been modified to support asynchronous writing of data.
- * It sends out the normal data and the error data using checkpointing synchronization
- * to make them output in sequence. If the ErrorDriver and "this" Driver 
- * are same, then no checkpointing is required to sequence the data written 
- * But when the two drivers are differant objects but acting 
- * on the same physical streams like for e.g. stdout and stderr then we need 
- * to sequence the asynchronous writing using checkpoints. (Note: Checkpointing 
- * as of now does not work for same stream...enters deadlock...works only for 
- * sequencing data from 2 differant streams...)
- *	    
- *	      (DataStream)   (ErrorStream)
+ * This VReport method has been modified to support asynchronous writing of data.
+ * To ensure that normal data writtern to 'stdout' and error data written by this
+ * routine to 'stderr' appear in the expected order, checkpoint synchronization
+ * is used when 'stdout' and 'stderr' are managed by different drivers (note that
+ * checkpointing is not required when 'stdout' and 'stderr' are managed by the
+ * same driver and would, in fact, deadlock if attempted).
  *
- *	    |Data  |		  |	      |   
- *	    |______|Releases	  |___________|	    
- *	    | CP1  |------------->|CP2        |
- *	    |      |<---	  |Error Data |
- *	    |      |   |Releases  |___________|
- *		       <----------|CP3        |
+ *        (DataStream)            (ErrorStream)
+ *
+ *         | Data  |              |            |
+ *         |_______|   Releases   |____________|
+ *         |       |------------->| CP2        |
+ *         | CP1   |              |____________|
+ *         |_______|<-+           | Error Data |
+ *         |       |  | Releases  |____________|
+ *         |       |  +-----------| CP3        |
  *
  * CheckPointing:
- *	For the above scenario, a "BLOCKING" CheckPoint (CP1) is inserted 
- * into the Data Stream to prevent data from being written beyond CP1.
- * Another "BLOCKING" CheckPoint (CP2) is inserted into the ErrorStream. 
- * Then error data is written into the error stream and a 
- * "NONBLOCKING" CheckPoint (CP3) is inserted into the Error Stream. 
- * All Blocking checkpoints have to be released for the ByteStream to proceed and 
- * output the data. Here in the above scenario, CP2 is released by CP1. 
- * Thus after the standard output data is written it unblocks the error stream 
- * which after printing out the error... unblocks the data stream 
+ * In the above scenario, "BLOCKING" checkpoints 'CP1' and 'CP2' are first inserted
+ * into the data and error streams respectively.  Both drivers are required to output
+ * whatever data they had in their buffers prior to the creation of those checkpoints
+ * but are prohibited from writing any new data that arrives after those checkpoints
+ * until the checkpoint is released.  With these protective checkpoints in place, the
+ * error data produced by this routine is written to the error stream followed by
+ * "NONBLOCKING" checkpoint 'CP3'.
+ *
+ * Operationally, when the data stream has drained its pre-'CP1' data, 'CP1' is
+ * triggered.  The handler for that trigger explicitly releases 'CP2', allowing
+ * the error stream to drain the newly written error data.  Once that data has been
+ * flushed, 'CP3' is triggered, releasing 'CP1' and the data stream it is blocking.
  * 
- * Note: A checkpoint with zero size will be triggered immediately. Hence
- * when there is no data in data stream and if CP1 is inserted it will be triggered
- * immediately. To accomodate this CP2 is inserted first, then CP1 and then CP3.
- * The dependency between the checkpoints: CP2 should be inserted before CP1
- * and CP1 should be inserted before CP3
-******************************************************************************/
+ * The order in which these checkpoints are created is important.  If no buffered
+ * data stream data is present when 'CP1' is created, 'CP1' will be triggered
+ * immediately.  To ensure that that triggering causes the release of 'CP2', 'CP2'
+ * must exist when 'CP1' is created.
+ *
+ ******************************************************************************/
 
 size_t IOMDriver::VReport (size_t sData, char const* fmt, va_list ap) {
 
-    IOMDriver *pErrorDriver = m_pErrorOutputDriver ? m_pErrorOutputDriver.operator->() : this;
+    IOMDriver *const pErrorDriver = m_pErrorOutputDriver ? m_pErrorOutputDriver.operator->() : this;
     size_t result = 0;
 
     if (pErrorDriver != this && pErrorDriver->checkpointsEnabled ()) {
 	//  create triggers that release checkpoints .....
-	Vca::VTrigger<IOMDriver>::Reference pErrorDriverTrigger (
-	    new Vca::VTrigger<IOMDriver> (pErrorDriver, &IOMDriver::releaseBlockingCheckPoint)
+	Vca::VTrigger<IOMDriver>::Reference const pErrorDriverTrigger (
+	    new Vca::VTrigger<IOMDriver> (
+                pErrorDriver, &IOMDriver::releaseBlockingCheckPoint
+            )
 	);
 
-	Vca::VTrigger<IOMDriver>::Reference pTrigger (
-	    new Vca::VTrigger<IOMDriver> (this, &IOMDriver::releaseBlockingCheckPoint)
+	Vca::VTrigger<IOMDriver>::Reference const pTrigger (
+	    new Vca::VTrigger<IOMDriver> (
+                this, &IOMDriver::releaseBlockingCheckPoint
+            )
 	);
 
 	pErrorDriver->createCheckPoint (true);			//CP2
