@@ -52,20 +52,20 @@
 #define IOMStreamGetLineFailureLimit 100
 
 
-/*******************************
- *******************************
- *****                     *****
- *****  IOMStreamProducer  *****
- *****                     *****
- *******************************
- *******************************/
+/*********************************
+ *********************************
+ *****                       *****
+ *****  IOMStream::Producer  *****
+ *****                       *****
+ *********************************
+ *********************************/
 
-/*******************************
- *----  IOMStreamProducer  ----*
- *******************************/
+/*********************************
+ *----  IOMStream::Producer  ----*
+ *********************************/
 
-class IOMStreamProducer : public Vca::VRolePlayer {
-    DECLARE_CONCRETE_RTT (IOMStreamProducer, Vca::VRolePlayer);
+class IOMStream::Producer : public Vca::VRolePlayer {
+    DECLARE_CONCRETE_RTT (Producer, Vca::VRolePlayer);
 
 //  Aliases
 public:
@@ -78,11 +78,11 @@ public:
 
 //  Construction
 public:
-    IOMStreamProducer (IOMStream *pIOMStream, BS *pBS);
+    Producer (IOMStream *pIOMStream, BS *pBS);
 
 //  Destruction
 protected:
-    ~IOMStreamProducer () {
+    ~Producer () {
         traceInfo ("Destroying IOMStreamProducer");
     }
 
@@ -94,7 +94,7 @@ public:
 private:
     Vca::VRole<ThisClass,Vca::IBSClient> m_pIBSClient;
 public:
-    void getRole (VReference<IBSClient>&rpRole) {
+    void getRole (IBSClient::Reference &rpRole) {
 	m_pIBSClient.getRole (rpRole);
     }
 
@@ -175,8 +175,8 @@ public:
 
 //  State
 protected:
-    VReference<IOMStream> const	m_pIOMStream;
-    VReference<BS>		m_pBS;
+    IOMStream::Reference const	m_pIOMStream;
+    BS::Reference		m_pBS;
     VkBuffer			m_iBuffer;
     size_t			m_sMinTransferBalance;
     VkStatus		        m_iStatus;       
@@ -189,7 +189,7 @@ protected:
  ***************************
  ***************************/
 
-DEFINE_CONCRETE_RTT (IOMStreamProducer);
+DEFINE_CONCRETE_RTT (IOMStream::Producer);
 
 /**************************
  **************************
@@ -197,7 +197,7 @@ DEFINE_CONCRETE_RTT (IOMStreamProducer);
  **************************
  **************************/
 
-IOMStreamProducer::IOMStreamProducer (
+IOMStream::Producer::Producer (
     IOMStream *pIOMStream, BS *pBS
 ) : m_pIOMStream (pIOMStream), m_pBS (pBS), m_sMinTransferBalance (0), m_pIBSClient (this) {
     traceInfo ("Creating IOMStreamProducer");
@@ -219,18 +219,18 @@ IOMStreamProducer::IOMStreamProducer (
  * suspended ComputationUnits and process the arrived data.
  *****************************************************************************/
 
-void IOMStreamProducer::OnTransfer (IBSClient *pRole, Vca::U32 sTransfer) {
+void IOMStream::Producer::OnTransfer (IBSClient *pRole, Vca::U32 sTransfer) {
     if (Produce (sTransfer))
 	m_pIOMStream->triggerAll ();
 }
 
-void IOMStreamProducer::OnEnd (IClient *pRole) {
+void IOMStream::Producer::OnEnd (IClient *pRole) {
     traceInfo ("\nIOMStreamProducerClient End...");
     m_iStatus.MakeClosedStatus ();
     m_pIOMStream->triggerAll ();
 }
 
-void IOMStreamProducer::OnError (IClient *pRole, Vca::IError *pError, VString const &rMessage) {
+void IOMStream::Producer::OnError (IClient *pRole, Vca::IError *pError, VString const &rMessage) {
 //    display ("\n%s:OnError: %s\n", rttName ().content (), rMessage.content ());
     m_iStatus.MakeFailureStatus ();
     m_pIOMStream->triggerAll ();
@@ -246,7 +246,7 @@ void IOMStreamProducer::OnError (IClient *pRole, Vca::IError *pError, VString co
 ******************************************************************************/
 
 
-void IOMStreamProducer::Close () {
+void IOMStream::Producer::Close () {
     traceInfo ("\nClosing IOMStreamProducer...");
     m_iStatus.MakeClosedStatus ();
     m_pBS->Close ();
@@ -264,7 +264,7 @@ void IOMStreamProducer::Close () {
  ******************************************************************************/
 
 
-size_t IOMStreamProducer::GetByteCount (VkStatus *pStatusReturn) const {
+size_t IOMStream::Producer::GetByteCount (VkStatus *pStatusReturn) const {
     pStatusReturn->setTo (m_iStatus);
     return ConsumerRegionSize () + m_pBS->GetByteCount ();
 }
@@ -273,7 +273,7 @@ size_t IOMStreamProducer::GetByteCount (VkStatus *pStatusReturn) const {
  *****  Input  *****
  *******************/
 
-bool IOMStreamProducer::GetBufferedData (
+bool IOMStream::Producer::GetBufferedData (
     size_t sResultMinimum, VkStatus *pStatusReturn
 ) {
     return GetBufferedData (sResultMinimum, sResultMinimum, pStatusReturn);
@@ -286,7 +286,7 @@ bool IOMStreamProducer::GetBufferedData (
  * is invoked which basically does a VBS ByteStream get operation
  *****************************************************************************/
 
-bool IOMStreamProducer::GetBufferedData (
+bool IOMStream::Producer::GetBufferedData (
     size_t sResultMinimum, size_t sResultMaximum, VkStatus *pStatusReturn
 ) {
     sResultMaximum = sResultMinimum > sResultMaximum ? sResultMinimum : sResultMaximum;
@@ -308,19 +308,19 @@ bool IOMStreamProducer::GetBufferedData (
     handlers, and so should not retrigger the events.
  *>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 
-bool IOMStreamProducer::StartRead (
+bool IOMStream::Producer::StartRead (
     void *pData, size_t sResultMinimum, size_t sResultMaximum, VkStatus *pStatusReturn
 ) {
     m_sMinTransferBalance = sResultMinimum;
 
-    VReference<IBSClient> pRole;
+    IBSClient::Reference pRole;
     getRole (pRole);
     bool bDone = Produce (m_pBS->get (pRole, pData, sResultMinimum, sResultMaximum));
     pStatusReturn->setTo (m_iStatus);
     return bDone;
 }
 
-bool IOMStreamProducer::Produce (size_t sTransfer) {
+bool IOMStream::Producer::Produce (size_t sTransfer) {
     m_iBuffer.Produce (sTransfer);
 
     if (m_sMinTransferBalance > sTransfer) {
@@ -345,7 +345,7 @@ bool IOMStreamProducer::Produce (size_t sTransfer) {
  * passed
  *****************************************************************************/
 
-size_t IOMStreamProducer::GetData (
+size_t IOMStream::Producer::GetData (
     size_t sResultMinimum, size_t sResultMaximum, void *pResultBuffer, VkStatus *pStatusReturn
 ) {
 
@@ -384,7 +384,7 @@ size_t IOMStreamProducer::GetData (
  * internal buffer to be sent to the requestor..
  *****************************************************************************/
 
-bool IOMStreamProducer::GetLine (
+bool IOMStream::Producer::GetLine (
     char **ppResult, size_t *psResult, VkStatus *pStatusReturn
 ) {
     pointer_t    pNewLine;
@@ -416,7 +416,7 @@ bool IOMStreamProducer::GetLine (
  * space. Also appends a \0 at the end for usage by string methods.
  *****************************************************************************/
 
-bool IOMStreamProducer::GetString (
+bool IOMStream::Producer::GetString (
     size_t	sResultMinimum,
     size_t	sResultMaximum,
     char**	ppResult,
@@ -448,17 +448,17 @@ bool IOMStreamProducer::GetString (
 }
 
 
-/*******************************
- *******************************
- *****                     *****
- *****  IOMStreamConsumer  *****
- *****                     *****
- *******************************
- *******************************/
+/*********************************
+ *********************************
+ *****                       *****
+ *****  IOMStream::Consumer  *****
+ *****                       *****
+ *********************************
+ *********************************/
 
 /******************************************************************************
  * Notes:
- *  IOMStreamConsumer has two buffers that is used in tandem for sending
+ *  IOMStream::Consumer has two buffers that is used in tandem for sending
  *  data out.The two buffers are called Active and Transit Buffer
  *  Data is initally filled up in the Active Buffer and when it needs to be 
  *  written out, it is referenced as the Transit Buffer while the other buffer is 
@@ -471,12 +471,12 @@ bool IOMStreamProducer::GetString (
  *  internally even if previous write hasnt yet completed.
  *******************************************************************************/
 
-/*******************************
- *----  IOMStreamConsumer  ----*
- *******************************/
+/*********************************
+ *----  IOMStream::Consumer  ----*
+ *********************************/
 
-class IOMStreamConsumer : public Vca::VRolePlayer {
-    DECLARE_CONCRETE_RTT (IOMStreamConsumer, Vca::VRolePlayer);
+class IOMStream::Consumer : public Vca::VRolePlayer {
+    DECLARE_CONCRETE_RTT (Consumer, Vca::VRolePlayer);
 
 //  Aliases
 public:
@@ -502,11 +502,11 @@ public:
 
 //  Construction
 public:
-    IOMStreamConsumer (BS *pBS);
+    Consumer (BS *pBS);
 
 //  Destruction
 protected:
-    ~IOMStreamConsumer ();
+    ~Consumer ();
 
 //  Base Roles
 public:
@@ -516,7 +516,7 @@ public:
 private:
     Vca::VRole<ThisClass,Vca::IBSClient> m_pIBSClient;
 public:
-    void getRole (VReference<IBSClient>&rpRole) {
+    void getRole (IBSClient::Reference&rpRole) {
 	m_pIBSClient.getRole (rpRole);
     }
 
@@ -596,7 +596,7 @@ public:
 
 //  State
 protected:
-    VReference<BS>		m_pBS;
+    BS::Reference		m_pBS;
     State			m_xState;
     VkBuffer			m_iBuffer [2];
     VkBuffer*			m_pActiveBuffer;
@@ -609,7 +609,7 @@ protected:
  ***************************
  ***************************/
 
-DEFINE_CONCRETE_RTT (IOMStreamConsumer);
+DEFINE_CONCRETE_RTT (IOMStream::Consumer);
 
 /**************************
  **************************
@@ -617,7 +617,7 @@ DEFINE_CONCRETE_RTT (IOMStreamConsumer);
  **************************
  **************************/
 
-IOMStreamConsumer::IOMStreamConsumer (BS *pBS)
+IOMStream::Consumer::Consumer (BS *pBS)
 :   m_pBS			(pBS)
 ,   m_pActiveBuffer		(&m_iBuffer[0])
 ,   m_xState			(State_Open)
@@ -632,7 +632,7 @@ IOMStreamConsumer::IOMStreamConsumer (BS *pBS)
  *************************
  *************************/
 
-IOMStreamConsumer::~IOMStreamConsumer () {
+IOMStream::Consumer::~Consumer () {
     traceInfo ("Destroying IOMStreamConsumer");
 
     if (m_pBS)
@@ -655,17 +655,17 @@ IOMStreamConsumer::~IOMStreamConsumer () {
  * stream's internal buffers.
  ******************************************************************************/
 
-void IOMStreamConsumer::OnTransfer (IBSClient *pRole, Vca::U32 sTransfer) {
+void IOMStream::Consumer::OnTransfer (IBSClient *pRole, Vca::U32 sTransfer) {
     transitBuffer ()->Consume (sTransfer);
     PutBufferedData ();
 }
 
-void IOMStreamConsumer::OnEnd (IClient *pRole) {
+void IOMStream::Consumer::OnEnd (IClient *pRole) {
     traceInfo ("\nIOMStreamConsumerClient End...");
     Close ();
 }
 
-void IOMStreamConsumer::OnError (IClient *pRole, Vca::IError *pError, VString const &rMessage) {
+void IOMStream::Consumer::OnError (IClient *pRole, Vca::IError *pError, VString const &rMessage) {
 //    display ("\n%s:OnError: %s\n", rttName ().content (), rMessage.content ());
     Close ();
 }
@@ -690,7 +690,7 @@ void IOMStreamConsumer::OnError (IClient *pRole, Vca::IError *pError, VString co
  * Returns true if all data has been flushed, false otherwise.
 ******************************************************************************/
 
-bool IOMStreamConsumer::PutBufferedData () {
+bool IOMStream::Consumer::PutBufferedData () {
 //  If a transfer is currently in progress, nothing more can be done at the moment, ...
     if (transitBufferIsntEmpty ())
 	return false;
@@ -702,7 +702,7 @@ bool IOMStreamConsumer::PutBufferedData () {
 	m_pActiveBuffer = transitBuffer ();
 
     //  ... start a transfer, ...
-	VReference<IBSClient> pRole;
+	IBSClient::Reference pRole;
     	getRole (pRole);
 	pTransitBuffer->Consume (
 	    m_pBS->put (
@@ -729,7 +729,7 @@ bool IOMStreamConsumer::PutBufferedData () {
  * transfer the buffered data
 ******************************************************************************/
 
-size_t IOMStreamConsumer::PutData (size_t sData, void const* pData) {
+size_t IOMStream::Consumer::PutData (size_t sData, void const* pData) {
     if (isntOpen ())
 	return 0;
 
@@ -755,7 +755,7 @@ size_t IOMStreamConsumer::PutData (size_t sData, void const* pData) {
     return sData;    
 }
 
-size_t IOMStreamConsumer::PutFormattedString (
+size_t IOMStream::Consumer::PutFormattedString (
     size_t sData, char const *pFormat, va_list pArgList
 ) {
     if (isntOpen ())
@@ -823,7 +823,7 @@ size_t IOMStreamConsumer::PutFormattedString (
     return sResult;
 }
 
-size_t IOMStreamConsumer::Print (size_t sData, char const *pFormat, ...) {
+size_t IOMStream::Consumer::Print (size_t sData, char const *pFormat, ...) {
     if (isntOpen ())
 	return 0;
 
@@ -845,7 +845,7 @@ size_t IOMStreamConsumer::Print (size_t sData, char const *pFormat, ...) {
  * signal
 ******************************************************************************/
 
-void IOMStreamConsumer::Close () {
+void IOMStream::Consumer::Close () {
     if (isntOpen ())
 	return;
 
@@ -868,7 +868,7 @@ void IOMStreamConsumer::Close () {
  * to the checkpoint list maintained by the ByteStream consumer.
  ******************************************************************************/
 
-void IOMStreamConsumer::createCheckPoint (bool bBlocking, Vca::ITrigger *pTrigger) {
+void IOMStream::Consumer::createCheckPoint (bool bBlocking, Vca::ITrigger *pTrigger) {
     if (m_pBS) {
 	Vca::VCheckPoint::Reference const pCheckPoint (
 	    new Vca::VCheckPoint (
@@ -879,7 +879,7 @@ void IOMStreamConsumer::createCheckPoint (bool bBlocking, Vca::ITrigger *pTrigge
     }
 }
 
-void IOMStreamConsumer::releaseBlockingCheckPoint () {
+void IOMStream::Consumer::releaseBlockingCheckPoint () {
     if (m_pBS)
 	m_pBS->releaseBlockingCheckPoint ();
 }
@@ -899,7 +899,7 @@ void IOMStreamConsumer::releaseBlockingCheckPoint () {
  **************************
  **************************/
 
-IOMStream::WindowFrame::WindowFrame (WindowFrame *pPredecessor, VReference<Producer> &rpProducer)
+IOMStream::WindowFrame::WindowFrame (WindowFrame *pPredecessor, Producer::Reference &rpProducer)
     : m_pPredecessor (pPredecessor), m_pProducer (rpProducer)
 {
     rpProducer.clear ();
@@ -914,7 +914,7 @@ IOMStream::WindowFrame::WindowFrame (WindowFrame *pPredecessor, VReference<Produ
 IOMStream::WindowFrame::~WindowFrame () {
 }
 
-IOMStream::WindowFrame *IOMStream::WindowFrame::Pop (VReference<Producer> &rpProducer) {
+IOMStream::WindowFrame *IOMStream::WindowFrame::Pop (Producer::Reference &rpProducer) {
     WindowFrame *const pPriorFrame = m_pPredecessor;
     rpProducer.setTo (m_pProducer);
     delete this;
@@ -1446,7 +1446,7 @@ VkStatusType IOMStream::GetLine (
 	}
 
     /***  ... otherwise, push a new redirection, ...  ***/
-	VkStatus iStatus; VReference<VBSProducer> pBS;
+	VkStatus iStatus; VBSProducer::Reference pBS;
 	if (!Vca::VDeviceFactory::Supply (iStatus, pBS, pInputFileName)) Report (
 	    0, ">>> Error opening file %s: %s\n", pInputFileName, iStatus.CodeDescription ()
 	);

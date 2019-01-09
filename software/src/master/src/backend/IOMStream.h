@@ -12,9 +12,6 @@
  *****  Declarations  *****
  **************************/
 
-class IOMStreamProducer;
-class IOMStreamConsumer;
-
 template<class Actor, typename Datum> class VReceiver;
 
 namespace Vca {
@@ -41,8 +38,8 @@ class IOMStream : public IOMDriver {
 
 //  Producer/Consumer Types
 public:
-    typedef IOMStreamProducer Producer;
-    typedef IOMStreamConsumer Consumer;
+    class Producer;
+    class Consumer;
 
     typedef Vca::VBSProducer VBSProducer;
     typedef Vca::VBSConsumer VBSConsumer;
