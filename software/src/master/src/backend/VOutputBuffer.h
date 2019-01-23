@@ -361,11 +361,11 @@ public:
     }
 
     bool isDivertingOutput () const {
-	return m_fDiverting;
+	return m_bDiverting;
     }
 
     bool isntDivertingOutput () const {
-	return !m_fDiverting;
+	return !m_bDiverting;
     }
 
     VOutputBuffer* parent () const {
@@ -453,7 +453,7 @@ protected:
     Reference			const	m_pParent;
     IOMDriver::Pointer		const	m_pChannel;
     AllocatoR::Reference	const	m_pAllocator;
-    bool			const	m_fDiverting;
+    bool			const	m_bDiverting;
     Cell**				m_pRingHeads;
 };
 

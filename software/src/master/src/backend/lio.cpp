@@ -103,12 +103,12 @@ VOutputBuffer::AllocatoR::AllocatoR ()
 
 
 //  Subtask/masking/diverting
-VOutputBuffer::VOutputBuffer (VTaskDomain* pDomain, VOutputBuffer* pParent, bool fDiverting)
+VOutputBuffer::VOutputBuffer (VTaskDomain* pDomain, VOutputBuffer* pParent, bool bDiverting)
 : VTaskDomainedStore	(pDomain)
 , m_pParent		(pParent)
 , m_pChannel		(pParent->m_pChannel)
-, m_pAllocator		(fDiverting ? new AllocatoR () : pParent->m_pAllocator.referent ())
-, m_fDiverting		(fDiverting || pParent->m_fDiverting || isntScalar ())
+, m_pAllocator		(bDiverting ? new AllocatoR () : pParent->m_pAllocator.referent ())
+, m_bDiverting		(bDiverting || pParent->m_bDiverting || isntScalar ())
 , m_pRingHeads		(0)
 {
 }
@@ -118,7 +118,7 @@ VOutputBuffer::VOutputBuffer (VTaskDomain* pDomain, IOMDriver* pChannel)
 : VTaskDomainedStore	(pDomain)
 , m_pChannel		(pChannel)
 , m_pAllocator		(new AllocatoR ())
-, m_fDiverting		(isntScalar ())
+, m_bDiverting		(isntScalar () || !pChannel)
 , m_pRingHeads		(0)
 {
     pChannel->IncrementUseCount ();
