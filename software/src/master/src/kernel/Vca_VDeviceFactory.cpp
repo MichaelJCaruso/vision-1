@@ -8207,6 +8207,12 @@ bool Vca::OS::DeviceManager::supply_(
     //  create the new device
 	SocketDevice::Data iDD (0, this, hSocket);
 	if (!bPassive)
+	// write timeouts for all connected sockets!
+	    struct timeval tv;
+	    tv.tv_sec = 30;
+	    tv.tv_usec = 0;
+	    setsockopt(hSocket, SOL_SOCKET, SO_SNDTIMEO, (const char*)&tv, sizeof tv);
+
 	    rpDevice.setTo (new VBSProducerConsumerDevice_<SocketDevice>(iDD));
 	else {
 	    rpDevice.setTo (new VListeningDevice_<SocketDevice>(iDD));
