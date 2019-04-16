@@ -1,0 +1,225 @@
+---
+title: Vision Portfolio Management Application Classes
+
+related_topics:
+  - url: "vpma.htm"
+    title: "Application Overview"
+  - url: "pmaXRef.htm"
+    title: "Application Cross Reference"
+
+sidebar:
+  nav: "sb_InvestmentManagers"
+---
+
+<h2 id="overview">Overview</h2>
+<p>
+The core Vision system comes with a set of classes already defined.
+These classes include an initial set of methods which can be
+modified and extended by the user.  Vision's built-in class
+hierarchy is discussed in detail in the 
+<a href="clXRef.htm">general Vision documentation</a>.
+The <b>Portfolio Management Application Layer</b> defines 
+classes, protocol, and starter applications that address the
+needs of the portfolio management function.
+This layer is entirely implemented using the Vision
+language.  You can therefore modify, extend, and reorganize the
+structures to meet the specific needs of your organization.
+<p>
+The <b>Portfolio Management Application Layer</b> includes the
+following classes:
+<pre>
+  Object
+     |
+     DataRecord
+     |  |
+     |  |-- <a href="#datarec">DivRecord</a>
+     |  |
+     |  |-- <a href="#datarec">PriceRecord</a>
+     |
+     Entity
+     |  |
+     |  |-- <a href="#account">Account</a>
+     |  |      |
+     |  |      |-- AggAccount
+     |  |      |
+     |  |      |-- CompositeAccount
+     |  |      |
+     |  |      |-- IndexAccount
+     |  |      |
+     |  |      |-- Portfolio
+     |  |
+     |  |-- <a href="#core">Classification</a>
+     |  |      |
+     |  |      |-- <a href="clpmaCompany.htm#related">AssetCategory</a>
+     |  |      |
+     |  |      |-- <a href="clpmaCompany.htm#related">Country</a>
+     |  |      |
+     |  |      |-- <a href="clpmaCompany.htm#related">Industry</a>
+     |  |      |
+     |  |      |-- <a href="clpmaCompany.htm#related">Sector</a>
+     |  |      |
+     |  |      |-- <a href="clpmaCompany.htm#related">SecurityType</a>
+     |  |
+     |  |-- <a href="#company">Company</a>
+     |  |
+     |  |-- <a href="#core">Currency</a>
+     |  |
+     |  |-- <a href="#security">Security</a>
+     |  |
+     |  |-- <a href="#core">Universe</a>
+     |
+     LinkRecord
+        |
+        |-- <a href="#account">CompositeAccount Component</a>
+        |
+        |-- <a href="#account">Holding</a>
+</pre>
+
+<a name="optional"></a>
+<p>
+A number of <a href="pmaSupp.htm">optional classes</a>
+are provided as part of the
+<b>Portfolio Management Application Layer</b>.  These classes
+can be installed as is or modified as needed, depending on your
+requirements.  Many of the <i>Headstart Applications</i> use
+data defined for these classes.  Optional classes include:
+<pre>
+  Object
+     |
+     DataRecord
+     |  |
+     |  |-- AnalystEstimate
+     |  |
+     |  |-- EconomicData
+     |  |
+     |  |-- FundamentalData
+     |         |
+     |         |-- FundamentalDataA
+     |         |
+     |         |-- FundamentalDataM
+     |         |
+     |         |-- FundamentalDataQ
+     |
+     Entity
+        |
+        |-- Analyst
+        |
+        |-- Classification
+        |
+        |-- RangeClassification
+              |
+              |--  MCapGroup
+              |
+              |--  PBGroup
+              |
+              |--  PEGroup
+</pre>
+
+<p>
+<hr>
+<h2 id="company"><a href="clpmaCompany.htm">The Company Class</a></h2>
+<p>
+The instances of the class <b>Company</b> represent the individual 
+corporate entities for which you track information.  Information
+maintained for a company typically includes country, industry, and
+fundamental data such as sales and earnings.  
+<p>
+The document, 
+<a href="clpmaCompany.htm"><i>The Company and Security Classes</i></a>, 
+describes the class <b>Company</b> and related classes.
+<p>
+<hr>
+<h2 id="security"><a href="clpmaCompany.htm">The Security Class</a></h2>
+<p>
+The instances of the class <b>Security</b> represent the individual 
+securities issued by a corporation, government, or other entity.
+A variety of security types exist including common and preferred
+stock, convertible and non-convertible bonds, and options.  
+A company may issue one or more securities.  A security is associated
+with no more than one company.  Data 
+maintained for a security typically includes price, dividend, and
+shares or amount outstanding information.  Accounts hold specific amounts of
+one or more individual securities.  
+<p>
+The document, 
+<a href="clpmaCompany.htm"><i>The Company and Security Classes</i></a>, 
+describes the class <b>Security</b> and related classes.
+
+<p>
+<hr>
+<h2 id="datarec"><a href="clpmaCompany.htm#datarec">The PriceRecord and DivRecord Classes</a></h2>
+<p>
+The classes <b>PriceRecord</b> and <b>DivRecord</b> are used to store
+pricing and dividend information over time.  Price and dividend records
+are normally accessed via messages defined at <b>Security</b>.
+Data maintained in a price record includes the trading volume and
+the high, low, and closing prices.  Data maintained in a dividend
+record includes the dividend amount and the payment date.
+<p>
+The document, 
+<a href="clpmaCompany.htm"><i>The Company and Security Classes</i></a>, 
+describes these classes in more details.
+
+<p>
+<hr>
+<h2 id="account"><a href="clpmaAccount.htm">The Account Class</a></h2>
+<p>
+The class <b>Account</b> is a super class of the classes
+<b>Portfolio</b>, <b>AggAccount</b>, <b>IndexAccount</b>,
+and <b>CompositeAccount</b>.
+A <b>Portfolio</b> is defined as an account whose holdings are created
+via a feed from an internal portfolio accounting system.  An 
+<b>AggAccount</b> is
+defined as an account whose holdings are created by combining the holdings 
+for a list of component portfolios.  An <b>IndexAccount</b> is defined as an
+account whose holdings are created starting with a universe of securities.
+A <b>CompositeAccount</b> is defined as an account whose holdings are
+created as a weighted combination of other accounts.
+<p>
+The document, <a href="clpmaAccount.htm"><i>The Account Classes</i></a>, 
+describes the class <b>Account</b> and related classes.
+
+<p>
+<hr>
+<h2 id="holding"><a href="clpmaAccount.htm#holding">The Holding Class</a></h2>
+<p>
+The class <b>Holding</b> is used to represent a specific security held in
+an account as of a specific point in time.  
+Holdings are rarely referenced directly.  Instead they are accessed
+via a particular security or account.  Data maintained for a holding
+typically includes shares held and total market value.
+<p>
+The document, <a href="clpmaAccount.htm"><i>The Account Classes</i></a>, 
+describes the <b>Holding</b> class.
+
+
+
+<p>
+<hr>
+<h2 id="core"><a href= "appClasses.htm">General Application Classes</a></h2>
+<p>
+All Vision installations include a basic hierarchy of classes defined
+for organizing application classes.  These abstract classes include:
+<p>
+<ul type="disc">
+<li>Entity
+<li>DataRecord
+<li>LinkRecord
+<li>Bridge
+<li>DataFeed
+<li>DBEntity
+</ul>
+<p>
+Most applications will interact with the database via <b>Entity</b>
+instances.  The other classes are used to store data or manage navigations
+from an entity to other parts of the database.  General application
+classes are described in more detail in the document
+<a href="appClasses.htm"><i>Core Application Classes</i></a>.
+<p>
+The classes <a href="clClassify.htm"><b>Classification</b></a>,
+<a href="clCurrency.htm"><b>Currency</b></a>
+and <a href="clUniverse.htm"><b>Universe</b></a>
+are <b>Entity</b> subclasses that are useful in a wide range of applications.
+These classes are included as a standard component of all Vision databases.
+
+{% include doc-footer.htm copydates="1998" %}

@@ -1,0 +1,56 @@
+---
+title: Vision Portfolio Management Application Supplemental Classes
+
+related_topics:
+  - url: "vpma.htm"
+    title: "Application Overview"
+  - url: "pmaXRef.htm"
+    title: "Application Cross Reference"
+
+sidebar:
+  nav: "sb_InvestmentManagers"
+---
+
+<h2 id="overview">Overview</h2>
+<p>
+
+A number of optional classes are provided as part of the
+<b>Portfolio Management Application Layer</b>.  These classes
+can be installed as is or modified as needed, depending on your
+requirements.  Many of the 
+<a href="pmaApps.htm"><i>Headstart Applications</i></a>
+use data defined for these classes.  Supplemental classes include:
+<pre>
+          Object
+             |
+             DataRecord
+             |  |
+             |  |-- AnalystEstimate
+             |  |
+             |  |-- EconomicData
+             |  |
+             |  |-- FundamentalData
+             |         |
+             |         |-- FundamentalDataA
+             |         |
+             |         |-- FundamentalDataM
+             |         |
+             |         |-- FundamentalDataQ
+             |
+             Entity
+                |
+                |-- Analyst
+                |
+                |-- Classification
+                       |
+                       |-- RangeClassification
+                              |
+                              |--  MCapGroup
+                              |
+                              |--  PBGroup
+                              |
+                              |--  PEGroup
+       
+</pre>
+
+{% include doc-footer.htm copydates="1998" %}

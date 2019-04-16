@@ -1,4 +1,9 @@
-# Requested Alteration Count Exceeds Maximum
+---
+title: "VdbScan Requested Alteration Count Exceeds Maximum"
+
+sidebar:
+  nav: "sb_Troubleshooting"
+---
 
 ## Severity: from coaching to **ROLLBACK**
 

@@ -1,3 +1,10 @@
+---
+title: "VdbScan Cartesian Space Exceeded"
+
+sidebar:
+  nav: "sb_Troubleshooting"
+---
+
 ## Symptoms
 
 These errors [can look like this](VdbScan-error-message-lookup.html#cartesian-space-exceeded).

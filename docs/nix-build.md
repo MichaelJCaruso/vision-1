@@ -1,4 +1,11 @@
-# *nix Build instructions
+---
+title: "*nix Build instructions"
+
+layout: single
+
+sidebar:
+  nav: "sb_GettingVision"
+---
 
 In this example we'll be building `release-8.1` on Linux from a fresh clone of the repository at `https://github.com/vision-dbms/vision.git`.  
 
@@ -21,8 +28,7 @@ In this example we'll be building `release-8.1` on Linux from a fresh clone of t
 1. Add those binaries to your path
    * `cd ../../../../software/builds/$VERSION/Linux_x86_64/bin`
    * ``setenv PATH `pwd`:$PATH``
-   
-   
+
 # Tests
 
 ## IVR
