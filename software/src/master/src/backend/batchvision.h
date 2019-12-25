@@ -50,7 +50,7 @@ public:
     typedef Vca::IStdPipeSource			IStdPipeSource;
 
     typedef Vsa::IEvaluator_Ex1			IEvaluator_Ex1;
-    typedef Vsa::IEvaluator             IEvaluator;
+    typedef Vsa::IEvaluator             	IEvaluator;
     typedef Vsa::IEvaluatorClient		IEvaluatorClient;
 
 //  Instance
@@ -70,6 +70,11 @@ public:
 public:
     class Plumber;
     friend class Plumber;
+
+//  TLEGofer
+ public:
+    class TLEGofer;
+    friend class TLEGofer;
 
 //  Construction
 public:

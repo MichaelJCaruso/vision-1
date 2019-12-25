@@ -47,6 +47,8 @@
 
 #include "VComputationScheduler.h"
 
+#include "Vbe_XFed_Export.h"
+
 #include "Vca_IDirectory.h"
 #include "Vca_IStdPipeSource.h"
 #include "Vca_IStdPipeSourceClient.h"
@@ -231,6 +233,45 @@ void Batchvision::Plumber::OnData (
 }
 
 
+/***********************************
+ ***********************************
+ *****                         *****
+ *****  Batchvision::TLEGofer  *****
+ *****                         *****
+ ***********************************
+ ***********************************/
+
+class Batchvision::TLEGofer : public Vca::VGoferInterface<Vxa::ICollection> {
+    DECLARE_CONCRETE_RTTLITE (TLEGofer, Vca::VGoferInterface<Vxa::ICollection>);
+
+//  Constuction
+public:
+    TLEGofer () {
+    }
+
+//  Destruction
+private:
+    ~TLEGofer () {
+    }
+
+//  Callbacks
+private:
+    virtual void onData () OVERRIDE;
+};
+
+/***********************
+ ***********************
+ *****  Callbacks  *****
+ ***********************
+ ***********************/
+
+void Batchvision::TLEGofer::onData () {
+    Vxa::ICollection::Reference pResult;
+    (new Vbe::XFed::Export (ENVIR_KDsc_TheTLE))->getRole (pResult);
+    setTo (pResult);
+}
+
+
 /*************************
  *************************
  *****               *****
@@ -287,6 +328,8 @@ Batchvision::Batchvision (
     Context *pContext
 ) : BaseClass (pContext), m_pIDirectoryEntrySink (this), m_pIEvaluator (this) {
     setDebuggerEnabledTo (GOPT_GetSwitchOption ("Developer") > 0);
+
+    aggregate (new TLEGofer ());
 }
 
 /*************************
