@@ -88,7 +88,7 @@ protected:
     VCall			* const m_pCall;
     rtLINK_CType		* const m_pSubset;
     M_CPD			* const m_pReordering;
-    VReference<rtCONTEXT_Handle>  const m_pContext;
+    rtCONTEXT_Handle::Reference   const m_pContext;
     unsigned int		  const m_iAttentionMask;
 };
 
@@ -802,13 +802,13 @@ public:
 
 //  State
 protected:
-    VReference<VTaskDomain> const	m_pDomain;
-    VReference<rtCONTEXT_Handle> const	m_pBlockContext;
+    VTaskDomain::Reference const	m_pDomain;
+    rtCONTEXT_Handle::Reference const	m_pBlockContext;
     rtINDEX_Key *const			m_pTemporalContext;
-    VReference<VReferenceableMonotype>	m_pLocalContext;
+    VReferenceableMonotype::Reference	m_pLocalContext;
     M_ASD*				m_pCodSpace;
-    VReference<VOutputBuffer>		m_pOutputBuffer;
-    VReference<VCall>			m_pCuc;
+    VOutputBuffer::Reference		m_pOutputBuffer;
+    VCall::Reference			m_pCuc;
     unsigned int			m_xNextParameter;
 };
 
