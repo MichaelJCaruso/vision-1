@@ -170,10 +170,6 @@ DEFINE_CONCRETE_RTT (VSNFTaskHolder);
 
 VSNFTaskHolder::Scheduler VSNFTaskHolder::g_iScheduler (V::GetEnvironmentUnsigned ("VxaClientConcurrency", UINT_MAX));
 
-unsigned int VSNFTaskHolder::g_iAdapterType (V::GetEnvironmentUnsigned ("VisionAdapterType", 0)); 
-                                            // 0: Bridge adapter type
-                                            // 1: SPlus adapter type
-
 /*************************
  *************************
  *****  Destruction  *****
@@ -444,28 +440,13 @@ void VSNFTaskHolder::GetParameter (IVSNFTaskHolder *pRole, unsigned int xParamet
 		    pImplementation->SetToVString (xParameter, dynamicArray );
 		}
 	    } else {
-		if (g_iAdapterType == 0) { // Bridge adapter
-		    VString iError;
-		    // count parameter as 1 based
-		    iError.printf ("Parameter %u: Parameters such as List and External Object Not Supported for Bridge Adapter", xParameter + 1); 
-		    signalParameterError (pRole, pImplementation, xParameter, iError);
-		}
-		else if (g_iAdapterType == 1) { // SPlus adapter
-    // ... deprecated object array, ...
-		    if(rDatum.storeTransientExtensionIsA(VExternalGroundStore::RTT)) {
-			VkDynamicArrayOf<ISingleton::Reference> dynamicArray (1);
-			dynamicArray[0].setTo (static_cast<VExternalGroundStore*> (
-			    rDatum.storeTransientExtensionIfA (VExternalGroundStore::RTT))->getInterface ()
-			);
-			pImplementation->SetToObjects (xParameter, dynamicArray);
-    // ... or deprecated variant, ...
-		    } else {
-			m_pSNFTask->createAndCopyToVariant (xParameter);
-		    }
-		} else { // other adapter
-		    VString iError ("Adapter Type other than Bridge and SPlus Not Supported"); 
-		    signalParameterError (pRole, pImplementation, xParameter, iError);
-		}
+		VString iError;
+	        // count parameter as 1 based
+		iError.printf (
+		    "Parameter %u: Parameters such as List and External Object Not Supported for Bridge Adapter",
+		    xParameter + 1
+		);
+		signalParameterError (pRole, pImplementation, xParameter, iError);
 	    }
 	} else {
     // ... or return an error because it's not a monotype:

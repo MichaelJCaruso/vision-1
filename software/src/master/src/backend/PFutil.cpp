@@ -2086,7 +2086,6 @@ PrivateFnDef void SetSessionAttributeToInteger (
 	rtVECTOR_EnablePOPOrdering (value ? true : false);
 	break;
     case EP_VxaAdapterType:
-	VSNFTaskHolder::g_iAdapterType = static_cast<unsigned int> (value);
 	break;
     case EP_VisionUsageLogSize:
 	pTask->transientServicesProvider ()->updateUsageLogSize (static_cast<unsigned int> (value));

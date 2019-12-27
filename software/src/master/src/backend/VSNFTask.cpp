@@ -35,82 +35,6 @@
 #include "Vxa_ICollection.h"
 
 
-/****************************************
- ****************************************
- *****                              *****
- *****  OnPopulateCompleted Assign  *****
- *****                              *****
- ****************************************
- ****************************************/
-
-/*------------------------------------------------------------------------------------*
- *  Monotype Case:
- *------------------------------------------------------------------------------------*/
-
-static void Assign (
-    VkDynamicArrayOf<Vxa::ISingleton::Reference> &rTarget, rtLINK_CType *pSubset, DSC_Descriptor const &rSource
-) {
-    VExternalGroundStore *pXGS = static_cast<VExternalGroundStore*> (
-	rSource.storeTransientExtensionIfA(VExternalGroundStore::RTT)
-    );
-    Vxa::ISingleton *pISingleton = pXGS ? pXGS->getInterface () : 0;
-
-    if (pSubset) {
-#       define handleNil(c,n,r)
-#       define handleRepeat(c,n,r) {\
-            rTarget[r] = pISingleton;\
-        }
-#       define handleRange(c,n,r) {\
-            while (n-- > 0)\
-            rTarget[r++] = pISingleton;\
-        }
-
-        rtLINK_TraverseRRDCList (pSubset, handleNil, handleRepeat, handleRange);
-
-#       undef handleNil
-#       undef handleRepeat
-#       undef handleRange
-    }
-    else {
-	unsigned int nElements = rTarget.cardinality ();
-/*
-        if (pISingleton == NULL) printf ("pIVB in VSNFTask::OnPopulateCompleted is NULL...");
-        else printf ("pIVB in VSNFTask::OnPopulateCompleted is not NULL...%d/n", nElements);
-*/
-	for (unsigned int xElement = 0; xElement < nElements; xElement++)
-	    rTarget[xElement] = pISingleton;
-    }
-}
-
-/*------------------------------------------------------------------------------------*
- *  Polytype Case:
- *------------------------------------------------------------------------------------*/
-
-static void Assign (
-    VkDynamicArrayOf<Vxa::ISingleton::Reference> &rTarget, rtLINK_CType *pSubset, VDescriptor &rSource
-) {
-    if (rSource.convertVectorsToMonotypeIfPossible ())
-	Assign (rTarget, pSubset, rSource.contentAsMonotype ());
-    else {
-	VFragmentation &rFragmentation = rSource.convertToFragmentation ();
-	rSource.normalize ();
-
-	VFragment* pFragment;
-	rFragmentation.goToFirstFragment ();
-	while (pFragment = rFragmentation.currentFragment ()) {
-	    rtLINK_CType::Reference pFragmentSubsetOfTarget;
-	    if (pSubset)
-		pFragmentSubsetOfTarget.claim (pSubset->Extract (pFragment->subset ()));
-	    else
-		pFragmentSubsetOfTarget.setTo (pFragment->subset ());
-	    
-	    Assign (rTarget, pFragmentSubsetOfTarget, pFragment->datum ());
-	    rFragmentation.goToNextFragment ();
-	}
-    }
-}
-
-
 /**********************
  **********************
  *****            *****
@@ -373,36 +297,6 @@ void VSNFTask::DoAnOldFashionedSNF () {
 }
 
 
-void VSNFTask::OnPopulateCompleted () {
-    VkDynamicArrayOf<ISingleton::Reference> iTargetArray(cardinality());
-    Assign (iTargetArray, NilOf (rtLINK_CType*), duc ());
-    m_pSNFTaskImplementation->SetToObjects (m_xParameter, iTargetArray);
-
-    if (m_iQueue.isEmpty ()) {
-	m_bRunning = false;
-	suspend ();
-    }
-    else {
-	VSNFTaskParameters::Reference rpSNFT;
-	m_iQueue.dequeue (rpSNFT);
-	m_xParameter = rpSNFT->getxParameter ();
-
-	VDescriptor  rVDatum;
-	getParameter (m_xParameter, rVDatum);
-
-	m_pContinuation = &VSNFTask::OnPopulateCompleted;
-
-	beginMessageCall ("copyToClientListAt:", 1);
-	loadDucWith (rVDatum);
-	commitRecipient ();
-	
-	loadDucWithRepresentative (remoteFactoryGS ());
-	commitParameter ();
-	commitCall ();
-    }
-}
-
-
 /***********************
  ***********************
  *****  Execution  *****
@@ -482,43 +376,12 @@ void VSNFTask::startExternalInvocation (ISingleton *pISingleton) {
 	VSNFTaskHolder::Reference const pSNFTaskHolder (new VSNFTaskHolder (this, pISingleton));
     }
 }
-
-VExternalGroundStore *VSNFTask::remoteFactoryGS () {
-    if (m_pRemoteFactoryGS.isNil ())
-	m_pRemoteFactoryGS.setTo (new VExternalGroundStore (m_pRemoteFactory));
-    return m_pRemoteFactoryGS;
-}
-
-void VSNFTask::createAndCopyToVariant (unsigned int xParameter) {
-    if (!m_bRunning) {
-	m_xParameter = xParameter;
-	m_bRunning = true;
-	VDescriptor  rVDatum;
-	getParameter (xParameter, rVDatum);
-
-	m_pContinuation = &VSNFTask::OnPopulateCompleted;
-
-	beginMessageCall ("copyToClientListAt:", 1);
-	loadDucWith (rVDatum);
-	commitRecipient ();
-
-	loadDucWithRepresentative (remoteFactoryGS ());
-	commitParameter ();
-	commitCall ();
-	resume ();
-    }
-    else {
-	VSNFTaskParameters * pParameters = new VSNFTaskParameters(xParameter);
-	m_iQueue.enqueue (pParameters);
-    }
-}
 
 void VSNFTask::returnImplementationHandle (
     IVSNFTaskImplementation *pImplementation,
     VkDynamicArrayOf<ISingleton::Reference> const & rRemoteFactoryArray
 ) {
     m_pSNFTaskImplementation = pImplementation;
-    m_pRemoteFactory = rRemoteFactoryArray[0];
 }
 
 

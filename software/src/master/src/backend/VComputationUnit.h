@@ -39,7 +39,6 @@ class VWaitTaskTrigger;
 
 /****************/
 #include "Vxa_ICollection.h"
-#include "Vxa_ISingleton.h"
 
 #include "Vsa_VEvaluation.h"
 

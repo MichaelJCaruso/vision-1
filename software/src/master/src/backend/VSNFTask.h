@@ -131,8 +131,6 @@ protected:
     void TriggerControlPoint ();
     void DoAnOldFashionedSNF ();
 
-    void OnPopulateCompleted ();
-
 //  Execution
 public:
     void dismiss () {
@@ -163,11 +161,7 @@ public:
     void startExternalInvocation (ISingleton *pExternalObject);
 
 //  External Invocation Support
-private:
-    VExternalGroundStore *remoteFactoryGS ();
-    public:
-    void createAndCopyToVariant (unsigned int xParameter);
-
+public:
     void returnImplementationHandle (
 	IVSNFTaskImplementation *pImplementation, VkDynamicArrayOf<ISingleton::Reference> const &
     );
@@ -222,19 +216,16 @@ private:
     Continuation		m_pContinuation;
     GroundContinuation		m_pGroundContinuation;
 
-    Queue				m_iQueue;
+    Queue			m_iQueue;
 
     IVSNFTaskImplementation::Reference
 				m_pSNFTaskImplementation;
-    ISingleton::Reference	m_pRemoteFactory;
-    VExternalGroundStore::Reference
-				m_pRemoteFactoryGS;
 
-    unsigned int m_xParameter;
+    unsigned int		m_xParameter;
     unsigned int		m_cSegmentsExpected;
     unsigned int		m_cSegmentsReceived;
 
-    VString m_pErrorString;
+    VString			m_pErrorString;
     bool			m_bRunning;
 };
 

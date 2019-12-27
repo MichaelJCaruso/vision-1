@@ -39,7 +39,6 @@
 #include "Vca_IDirectory.h"
 #include "Vca_IPipeFactory.h"
 
-#include "Vxa_ISingleton.h"
 #include "VTransientServices.h"
 
 

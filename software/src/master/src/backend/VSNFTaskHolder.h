@@ -349,11 +349,6 @@ private:
 	IVSNFTaskHolder *pRole, IVSNFTaskImplementation *pImplementation, unsigned int xParameter, VString const & rError
     );
 
-
-//  Adapter type
-public:
-    static unsigned int g_iAdapterType;
-
 //  State
 private:
     static Scheduler g_iScheduler;
