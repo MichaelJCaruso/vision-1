@@ -11,13 +11,13 @@
  *****  Declarations  *****
  **************************/
 
-class VSNFTaskParameters;
+#include "VSNFTaskParameters.h"
 
 /*************************
  *****  Definitions  *****
  *************************/
 
-class VSNFTaskParametersList : public VReference<VSNFTaskParameters> {
+class VSNFTaskParametersList : public VSNFTaskParameters::Reference {
 //  Construction
 public:
     VSNFTaskParametersList (VSNFTaskParametersList const& rOther);
@@ -29,10 +29,7 @@ public:
 
 //  Access/Update
 public:
-    inline void pop (VReference<VSNFTaskParameters>& rpHeadReturn);
-
-//  State
-protected:
+    inline void pop (VSNFTaskParameters::Reference& rpHeadReturn);
 };
 
 

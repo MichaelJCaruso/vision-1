@@ -45,7 +45,7 @@ VSNFTaskParameters::VSNFTaskParameters (unsigned int xParameter)
 
 VSNFTaskParametersList::VSNFTaskParametersList (
     VSNFTaskParametersList const& rOther
-) : VReference<VSNFTaskParameters> (rOther) {
+) : VSNFTaskParameters::Reference (rOther) {
 }
 
 VSNFTaskParametersList::VSNFTaskParametersList () {

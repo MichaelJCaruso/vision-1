@@ -42,7 +42,7 @@ public:
 private:
     unsigned int const m_xParameter;
 public:
-    VReference<VSNFTaskParameters> m_pSuccessor;
+    Reference m_pSuccessor;
 };
 
 
