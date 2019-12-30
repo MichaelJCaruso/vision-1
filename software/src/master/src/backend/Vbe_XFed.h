@@ -13,6 +13,8 @@
 
 #include "Vxa_ICaller.h"
 #include "Vxa_ICollection.h"
+#include "Vxa_IVSNFTaskImplementation3.h"
+#include "Vxa_IVSNFTaskImplementation3NC.h"
 
 /*************************
  *****  Definitions  *****
@@ -33,6 +35,18 @@ namespace Vbe {
 
         typedef Vxa::ICollection ICollection;
         typedef Vxa::ISingleton  ISingleton;
+
+        typedef Vxa::IVSNFTaskImplementation3NC IVSNFTaskImplementation3NC;
+        typedef Vxa::IVSNFTaskImplementation3   IVSNFTaskImplementation3;
+        typedef Vxa::IVSNFTaskImplementation2   IVSNFTaskImplementation2;
+        typedef Vxa::IVSNFTaskImplementation    IVSNFTaskImplementation;
+
+        typedef Vxa::i32_array_t i32_array_t;
+        typedef Vxa::f64_array_t f64_array_t;
+        typedef Vxa::str_array_t str_array_t;
+        typedef Vxa::obj_array_t obj_array_t;
+
+        typedef Vxa::i32_s2array_t i32_s2array_t;
     } // namespace XFed
 } // namespace Vbe
 

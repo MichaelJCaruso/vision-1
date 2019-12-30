@@ -121,6 +121,7 @@ VTransientServicesForBatchvision.o
 VUtilityCall.o
 VUtilityTask.o
 VWhileTrueController.o
+Vbe_XFed_CallAgent.o
 Vbe_XFed_Export.o
 Vdd_Store.o
 VfDeleteGenerator.o
