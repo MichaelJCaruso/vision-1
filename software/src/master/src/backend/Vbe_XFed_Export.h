@@ -70,9 +70,7 @@ namespace Vbe {
 
         //  Access
         public:
-            cardinality_t cardinality () const {
-                return 0;
-            }
+            cardinality_t cardinality () const;
 
         //  State
         private:

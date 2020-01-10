@@ -85,10 +85,24 @@ void Vbe::XFed::Export::QueryCardinality (ICollection *pRole, IVReceiver<cardina
 void Vbe::XFed::Export::ExternalImplementation (
     ISingleton *pRole, IVSNFTaskHolder *pCaller, VString const &rMethodName, cardinality_t cParameters, cardinality_t cTask
 ) {
+/*================*
+ *  Call Type 1 NOT SUPPORTED
+ *================*/
     Vxa::IVSNFTaskHolder1::Pointer const pCaller1 (dynamic_cast<IVSNFTaskHolder1*>(pCaller));
     if (pCaller1) {
         pCaller1->ReturnError ("Vxa::ISingleton Call Type Not Supported");
     } else {
         pCaller->TurnBackSNFTask ();
     }
+}
+
+
+/********************
+ ********************
+ *****  Access  *****
+ ********************
+ ********************/
+
+Vxa::cardinality_t Vbe::XFed::Export::cardinality () const {
+    return m_pStore->getPToken ()->cardinality ();
 }
