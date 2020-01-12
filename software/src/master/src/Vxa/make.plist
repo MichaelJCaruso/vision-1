@@ -41,6 +41,7 @@ Vxa_VPolytypeMap.o
 Vxa_VPolytypeMapMaker.o
 Vxa_VResultBuilder.o
 Vxa_VRolePlayer.o
+Vxa_Selector.o
 Vxa_VSerializer2DynArray.o
 Vxa_VSet.o
 Vxa_VTask.o

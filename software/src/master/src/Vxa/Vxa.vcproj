@@ -478,6 +478,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\Vxa_Selector.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\Vxa_VSerializer2DynArray.cpp"
 				>
 			</File>
@@ -704,6 +708,10 @@
 			</File>
 			<File
 				RelativePath="..\Vxa_VScalar.h"
+				>
+			</File>
+			<File
+				RelativePath="..\Vxa_Selector.h"
 				>
 			</File>
 			<File
