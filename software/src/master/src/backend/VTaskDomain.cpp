@@ -82,6 +82,11 @@ VTaskDomain::VTaskDomain (VTaskDomain *pParent, rtLINK_CType *pSubset, M_CPD *pR
 {
 }
 
+VTaskDomain::VTaskDomain (
+    unsigned int sDomain
+) : m_pDPT (new rtPTOKEN_Handle (M_AttachedNetwork->ScratchPad (), sDomain)) {
+}
+
 VTaskDomain::VTaskDomain () : m_pDPT (M_AttachedNetwork->TheScalarPTokenHandle ()) {
 }
 

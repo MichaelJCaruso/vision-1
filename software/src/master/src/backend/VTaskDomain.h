@@ -44,12 +44,14 @@ protected:
 
 //  Globals
 protected:
-    static VReference<VTaskDomain> g_pGroundDomain;
+    static VTaskDomain::Reference g_pGroundDomain;
 
 //  Construction
 protected:
     VTaskDomain (VTaskDomain* pParent, rtLINK_CType* pSubset, M_CPD* pReordering);
     VTaskDomain ();
+public:
+    VTaskDomain (unsigned int sDomain);
 
 public:
     VTaskDomain* childDomain (rtLINK_CType* pSubset, M_CPD* pReordering) {
