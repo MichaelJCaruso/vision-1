@@ -9,10 +9,13 @@
 
 #include "Vca_VRolePlayer.h"
 #include "Vxa_IVSNFTaskImplementation3NC.h"
+#include "Vxa_Selector.h"
 
 /**************************
  *****  Declarations  *****
  **************************/
+
+#include "VTaskDomain.h"
 
 /*************************
  *****  Definitions  *****
@@ -30,9 +33,18 @@ namespace Vbe {
         //  Aliases
         public:
             typedef Vxa::IVSNFTaskImplementation3NC ICallImplementation;
+            typedef Vxa::Selector Selector;
 
         //  Construction
         public:
+            CallAgent (
+                Vdd::Store *pCluster,
+                ICaller *pCaller,
+                cardinality_t sTask,
+                cardinality_t cParameters,
+                VString const &rMethodName,
+                bool bIntentional
+            );
 
         //  Destruction
         private:
@@ -91,9 +103,35 @@ namespace Vbe {
 
         //  Access
         public:
+            Vdd::Store *cluster () const {
+                return m_pCluster;
+            }
+            ICaller *caller () const {
+                return m_pCaller;
+            }
+            VTaskDomain *domain () const {
+                return m_pDomain;
+            }
+            Selector const &selector () const {
+                return m_iSelector;
+            }
+            cardinality_t parameterCount () const {
+                return m_iSelector.parameterCount ();
+            }
+            VString const &messageName () const {
+                return m_iSelector.fullName ();
+            }
+            bool intensional () const {
+                return m_bIntensional;
+            }
 
         //  State
         private:
+            Vdd::Store::Reference  const m_pCluster;
+            ICaller::Reference     const m_pCaller;
+            VTaskDomain::Reference const m_pDomain;
+            Selector               const m_iSelector;
+            bool                   const m_bIntensional;
         };
 
     } // namespace XFed

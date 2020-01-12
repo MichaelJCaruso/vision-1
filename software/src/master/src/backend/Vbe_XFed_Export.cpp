@@ -24,6 +24,8 @@
 
 #include "DSC_Store.h"
 
+#include "Vbe_XFed_CallAgent.h"
+
 #include "Vxa_ICaller.h"
 #include "Vxa_IVSNFTaskHolder1.h"
 
@@ -60,20 +62,22 @@ Vbe::XFed::Export::~Export () {
  ****************************/
 
 void Vbe::XFed::Export::Bind (
-    ICollection *pRole, ICaller *pCaller, VString const &rMethodName, cardinality_t cParameters, cardinality_t cTask
+    ICollection *pRole, ICaller *pCaller, VString const &rMethodName, cardinality_t cParameters, cardinality_t sTask
 ) {
     if (pCaller) {
-//        VCallType2 iCallHandle (this, rMethodName, cParameters, cTask, pCaller, true);
-//        invokeCall (iCallHandle);
+        CallAgent::Reference const pAgent (
+            new CallAgent (store (), pCaller, sTask, cParameters, rMethodName, true)
+        );
     }
 }
 
 void Vbe::XFed::Export::Invoke (
-    ICollection *pRole, ICaller *pCaller, VString const &rMethodName, cardinality_t cParameters, cardinality_t cTask
+    ICollection *pRole, ICaller *pCaller, VString const &rMethodName, cardinality_t cParameters, cardinality_t sTask
 ) {
     if (pCaller) {
-//        VCallType2 iCallHandle (this, rMethodName, cParameters, cTask, pCaller, false);
-//        invokeCall (iCallHandle);
+        CallAgent::Reference const pAgent (
+            new CallAgent (store (), pCaller, sTask, cParameters, rMethodName, false)
+        );
     }
 }
 
@@ -83,7 +87,7 @@ void Vbe::XFed::Export::QueryCardinality (ICollection *pRole, IVReceiver<cardina
 }
 
 void Vbe::XFed::Export::ExternalImplementation (
-    ISingleton *pRole, IVSNFTaskHolder *pCaller, VString const &rMethodName, cardinality_t cParameters, cardinality_t cTask
+    ISingleton *pRole, IVSNFTaskHolder *pCaller, VString const &rMethodName, cardinality_t cParameters, cardinality_t sTask
 ) {
 /*================*
  *  Call Type 1 NOT SUPPORTED

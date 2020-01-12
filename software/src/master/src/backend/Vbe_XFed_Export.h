@@ -71,6 +71,9 @@ namespace Vbe {
         //  Access
         public:
             cardinality_t cardinality () const;
+            Vdd::Store *store () const {
+                return m_pStore;
+            }
 
         //  State
         private:

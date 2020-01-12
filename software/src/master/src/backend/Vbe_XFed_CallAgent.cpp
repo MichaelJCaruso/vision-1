@@ -29,6 +29,26 @@
  **************************
  **************************/
 
+Vbe::XFed::CallAgent::CallAgent (
+    Vdd::Store *pCluster,
+    ICaller *pCaller,
+    cardinality_t sTask,
+    cardinality_t cParameters,
+    VString const &rMethodName,
+    bool bIntensional
+) : m_pCluster (
+    pCluster
+), m_pCaller (
+    pCaller
+), m_pDomain (
+    new VTaskDomain (sTask)
+), m_iSelector (
+    rMethodName, cParameters
+), m_bIntensional (
+    bIntensional
+), m_pICallImplementation (this) {
+}
+
 /*************************
  *************************
  *****  Destruction  *****
