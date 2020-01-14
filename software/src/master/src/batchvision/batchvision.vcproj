@@ -1683,6 +1683,75 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\Vbe_XFed_CallAgent.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						PreprocessorDefinitions=""
+						BrowseInformation="1"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\Vbe_XFed_Export.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						PreprocessorDefinitions=""
+						BrowseInformation="1"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\Vbe_XFed_TopTask.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="0"
+						PreprocessorDefinitions=""
+						BrowseInformation="1"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						Optimization="2"
+						PreprocessorDefinitions=""
+					/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\VBenderenceable.cpp"
 				>
 				<FileConfiguration
@@ -4305,6 +4374,26 @@
 			</File>
 			<File
 				RelativePath="..\VAssociativeResult.h"
+				>
+			</File>
+			<File
+				RelativePath="..\Vbe.h"
+				>
+			</File>
+			<File
+				RelativePath="..\Vbe_XFed.h"
+				>
+			</File>
+			<File
+				RelativePath="..\Vbe_XFed_CallAgent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\Vbe_XFed_Export.h"
+				>
+			</File>
+			<File
+				RelativePath="..\Vbe_XFed_TopTask.h"
 				>
 			</File>
 			<File
