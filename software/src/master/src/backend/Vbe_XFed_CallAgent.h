@@ -35,6 +35,10 @@ namespace Vbe {
             typedef Vxa::IVSNFTaskImplementation3NC ICallImplementation;
             typedef Vxa::Selector Selector;
 
+        //  SelfProvider;
+        public:
+            class SelfProvider;
+
         //  Construction
         public:
             CallAgent (
@@ -124,6 +128,22 @@ namespace Vbe {
             bool intensional () const {
                 return m_bIntensional;
             }
+
+        //  Implementation
+        private:
+            bool raiseTypeException (
+                std::type_info const &rOriginatorType, std::type_info const &rResultType, char const *pWhich
+            ) const;
+            bool raiseParameterTypeException (
+                std::type_info const &rOriginatingType, std::type_info const &rResultType
+            ) const;
+            bool raiseResultTypeException (
+                std::type_info const &rOriginatorType, std::type_info const &rUnexpectedType
+            ) const;
+            bool raiseUnimplementedOperationException (
+                std::type_info const &rOriginatingType, char const *pWhere
+            ) const;
+            bool returnError (VString const &rMessage) const;
 
         //  State
         private:

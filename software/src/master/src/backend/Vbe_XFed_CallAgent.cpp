@@ -21,6 +21,8 @@
 /************************
  *****  Supporting  *****
  ************************/
+
+#include "V_VRTTI.h"
 
 
 /**************************
@@ -117,9 +119,7 @@ void Vbe::XFed::CallAgent::SetToVString (
 void Vbe::XFed::CallAgent::SetToObjects (
     IVSNFTaskImplementation *, unsigned int xParameter, obj_array_t const &rValue
 ) {
-#if 0
     raiseUnimplementedOperationException (typeid(*this),"SetToObjects");
-#endif
 }
 
 void Vbe::XFed::CallAgent::SetToS2Integers (
@@ -155,3 +155,51 @@ void Vbe::XFed::CallAgent::OnParameterError (
     onFailure (0, iMsg);
 #endif
 }
+
+
+/****************************
+ ****************************
+ *****  Implementation  *****
+ ****************************
+ ****************************/
+
+bool Vbe::XFed::CallAgent::raiseTypeException (
+    std::type_info const &rOriginatorType, std::type_info const &rUnexpectedType, char const *pWhere
+) const {
+    V::VRTTI iOriginatorRTTI (rOriginatorType);
+    V::VRTTI iUnexpectedRTTI (rUnexpectedType);
+
+    VString iMessage (128);
+    iMessage << iOriginatorRTTI.name () << ": Unsupported " << pWhere << " Type: " << iUnexpectedRTTI.name ();
+
+    return returnError (iMessage);
+}
+
+bool Vbe::XFed::CallAgent::raiseParameterTypeException (
+    std::type_info const &rOriginatorType, std::type_info const &rUnexpectedType
+) const {
+    return raiseTypeException (rOriginatorType, rUnexpectedType, "Parameter");
+}
+
+bool Vbe::XFed::CallAgent::raiseResultTypeException (
+    std::type_info const &rOriginatorType, std::type_info const &rUnexpectedType
+) const {
+    return raiseTypeException (rOriginatorType, rUnexpectedType, "Result");
+}
+
+bool Vbe::XFed::CallAgent::raiseUnimplementedOperationException (
+    std::type_info const &rOriginatorType, char const *pWhere
+) const {
+    V::VRTTI iOriginatorRTTI (rOriginatorType);
+    VString iMessage (128);
+    iMessage << iOriginatorRTTI.name () << "::" << pWhere << ": Not Implemented";
+
+    return returnError (iMessage);
+}
+
+bool Vbe::XFed::CallAgent::returnError (VString const &rMessage) const {
+    m_pCaller->ReturnError (rMessage);
+//    reportCompletion ();
+    return false; // false -> call failed
+}
+
