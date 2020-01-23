@@ -68,6 +68,7 @@ void Vbe::XFed::Export::Bind (
         CallAgent::Reference const pAgent (
             new CallAgent (store (), pCaller, sTask, cParameters, rMethodName, true)
         );
+        pAgent->startCall ();
     }
 }
 
@@ -78,6 +79,7 @@ void Vbe::XFed::Export::Invoke (
         CallAgent::Reference const pAgent (
             new CallAgent (store (), pCaller, sTask, cParameters, rMethodName, false)
         );
+        pAgent->startCall ();
     }
 }
 

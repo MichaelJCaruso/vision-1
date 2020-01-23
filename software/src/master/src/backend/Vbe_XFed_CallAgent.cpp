@@ -25,6 +25,87 @@
 #include "V_VRTTI.h"
 
 
+/***************************************
+ ***************************************
+ *****                             *****
+ *****  Vbe::XFed::CallAgent::Arg  *****
+ *****                             *****
+ ***************************************
+ ***************************************/
+
+Vbe::XFed::CallAgent::Arg::Arg (Vdd::Store *pStore ) : m_pStore (pStore) {
+}
+
+Vbe::XFed::CallAgent::Arg::~Arg () {
+}
+
+
+/****************************************
+ ****************************************
+ *****                              *****
+ *****  Vbe::XFed::CallAgent::Arg_  *****
+ *****                              *****
+ ****************************************
+ ****************************************/
+
+template <typename pointer_data_t> class Vbe::XFed::CallAgent::Arg_ : public Arg {
+    DECLARE_CONCRETE_RTTLITE (Arg_<pointer_data_t>, Arg);
+
+//  Construction
+public:
+    Arg_(
+        Vdd::Store *pStore, pointer_data_t const &rPointerData
+    ) : BaseClass (pStore), m_iPointerData (rPointerData) {
+    }
+
+//  Destruction
+private:
+    ~Arg_() {
+    }
+
+//  State
+private:
+    pointer_data_t m_iPointerData;
+};
+
+
+/************************************************
+ ************************************************
+ *****                                      *****
+ *****  Vbe::XFed::CallAgent::SelfProvider  *****
+ *****                                      *****
+ ************************************************
+ ************************************************/
+
+class Vbe::XFed::CallAgent::SelfProvider : public Vca::VRolePlayer {
+    DECLARE_CONCRETE_RTTLITE (SelfProvider, Vca::VRolePlayer);
+
+//  Construction
+public:
+    SelfProvider (CallAgent *pCallAgent) : m_pCallAgent (pCallAgent) {
+    }
+
+//  Destruction
+private:
+    ~SelfProvider () {
+    }
+
+//  Roles
+
+//  State
+private:
+    CallAgent::Reference const m_pCallAgent;
+};
+
+
+/**********************************
+ **********************************
+ *****                        *****
+ *****  Vbe::XFed::CallAgent  *****
+ *****                        *****
+ **********************************
+ **********************************/
+
 /**************************
  **************************
  *****  Construction  *****
@@ -34,21 +115,15 @@
 Vbe::XFed::CallAgent::CallAgent (
     Vdd::Store *pCluster,
     ICaller *pCaller,
-    cardinality_t sTask,
+    cardinality_t cTask,
     cardinality_t cParameters,
     VString const &rMethodName,
     bool bIntensional
-) : m_pCluster (
-    pCluster
-), m_pCaller (
-    pCaller
-), m_pDomain (
-    new VTaskDomain (sTask)
-), m_iSelector (
-    rMethodName, cParameters
-), m_bIntensional (
+) : m_pCluster (pCluster), m_pCaller (pCaller), m_pDomain (
+    new VTaskDomain (cTask)
+), m_iSelector (rMethodName, cParameters), m_bIntensional (
     bIntensional
-), m_pICallImplementation (this) {
+), m_bGoodToGo (true), m_cSuspensions (0), m_pICallImplementation (this) {
 }
 
 /*************************
@@ -157,6 +232,35 @@ void Vbe::XFed::CallAgent::OnParameterError (
 }
 
 
+/***********************
+ ***********************
+ *****  Execution  *****
+ ***********************
+ ***********************/
+
+bool Vbe::XFed::CallAgent::startCall () {
+    suspend ();
+    resume ();
+}
+
+void Vbe::XFed::CallAgent::resume () {
+    switch (m_cSuspensions) {
+    case 0:
+        break;
+    case 1:
+        m_cSuspensions = 0;
+        onResume ();
+        break;
+    default:
+        m_cSuspensions--;
+        break;
+    }
+}
+
+void Vbe::XFed::CallAgent::onResume () {
+}
+
+
 /****************************
  ****************************
  *****  Implementation  *****
@@ -198,8 +302,9 @@ bool Vbe::XFed::CallAgent::raiseUnimplementedOperationException (
 }
 
 bool Vbe::XFed::CallAgent::returnError (VString const &rMessage) const {
+    m_bGoodToGo = false;
+
     m_pCaller->ReturnError (rMessage);
-//    reportCompletion ();
     return false; // false -> call failed
 }
 

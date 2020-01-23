@@ -24,20 +24,53 @@
 namespace Vbe {
     namespace XFed {
 
+        class Export;
+
     /****************************************
      *----  class Vbe::XFed::CallAgent  ----*
      ****************************************/
         class CallAgent : public Vca::VRolePlayer {
             DECLARE_CONCRETE_RTTLITE (CallAgent, Vca::VRolePlayer);
 
+        //  Friends
+            friend class Export;
+
         //  Aliases
         public:
             typedef Vxa::IVSNFTaskImplementation3NC ICallImplementation;
             typedef Vxa::Selector Selector;
 
-        //  SelfProvider;
+        /*********************************************
+         *----  class Vbe::XFed::CallAgent::Arg  ----*
+         *********************************************/
+        public:
+            class Arg : public VBenderenceable {
+                DECLARE_ABSTRACT_RTTLITE (Arg, VBenderenceable);
+
+            //  Construction
+            protected:
+                Arg (Vdd::Store *pStore);
+
+            //  Destruction
+            protected:
+                ~Arg ();
+
+            //  State
+            protected:
+                Vdd::Store::Reference const m_pStore;
+            };
+
+        //  template <typename data_t> class Arg_
+        public:
+            template <typename data_t> class Arg_;
+
+        //  class SelfProvider;
         public:
             class SelfProvider;
+
+        /****************************************
+         *----  class Vbe::XFed::CallAgent  ----*
+         ****************************************/
 
         //  Construction
         public:
@@ -129,6 +162,17 @@ namespace Vbe {
                 return m_bIntensional;
             }
 
+        //  Execution
+        private:
+            bool startCall ();
+
+            void suspend () {
+                m_cSuspensions++;
+            }
+            void resume ();
+
+            void onResume ();
+
         //  Implementation
         private:
             bool raiseTypeException (
@@ -152,6 +196,8 @@ namespace Vbe {
             VTaskDomain::Reference const m_pDomain;
             Selector               const m_iSelector;
             bool                   const m_bIntensional;
+            bool                 mutable m_bGoodToGo;
+            cardinality_t                m_cSuspensions;
         };
 
     } // namespace XFed
