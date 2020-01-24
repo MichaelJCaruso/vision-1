@@ -42,7 +42,7 @@ namespace Vxa {
 
     typedef cardinality32_t cardinality_t;
 
-    typedef unsigned int     object_reference_t;
+    typedef cardinality_t    object_reference_t;
     typedef VkDynamicArrayOf<object_reference_t> object_reference_array_t;
 
     class Unused {};
