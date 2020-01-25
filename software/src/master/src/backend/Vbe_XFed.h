@@ -47,6 +47,10 @@ namespace Vbe {
         typedef Vxa::obj_array_t obj_array_t;
 
         typedef Vxa::i32_s2array_t i32_s2array_t;
+
+        typedef Vxa::object_reference_t       object_reference_t;
+        typedef Vxa::object_reference_array_t object_reference_array_t;
+
     } // namespace XFed
 } // namespace Vbe
 

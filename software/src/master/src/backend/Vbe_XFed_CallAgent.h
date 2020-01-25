@@ -67,6 +67,7 @@ namespace Vbe {
         //  class SelfProvider;
         public:
             class SelfProvider;
+            friend class SelfProvider;
 
         /****************************************
          *----  class Vbe::XFed::CallAgent  ----*
@@ -164,14 +165,20 @@ namespace Vbe {
 
         //  Execution
         private:
-            bool startCall ();
+            void start ();
+
+            void onArgument (unsigned int xArgument, Arg *pArg);
+            void onSelf (Arg *pArg);
+
+            void requestArgument (unsigned int xArgument);
+            void requestSelf ();
 
             void suspend () {
                 m_cSuspensions++;
             }
             void resume ();
 
-            void onResume ();
+            void finish ();
 
         //  Implementation
         private:
@@ -198,6 +205,8 @@ namespace Vbe {
             bool                   const m_bIntensional;
             bool                 mutable m_bGoodToGo;
             cardinality_t                m_cSuspensions;
+            Arg::Reference               m_pSelf;
+            VkDynamicArrayOf<Arg::Reference> m_apArgs;
         };
 
     } // namespace XFed
