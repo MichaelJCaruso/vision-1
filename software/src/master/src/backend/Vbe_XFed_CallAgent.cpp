@@ -23,6 +23,8 @@
  ************************/
 
 #include "V_VRTTI.h"
+
+#include "Vbe_XFed_TopTask.h"
 
 
 /***************************************
@@ -298,6 +300,8 @@ void Vbe::XFed::CallAgent::resume () {
 }
 
 void Vbe::XFed::CallAgent::finish () {
+    TopTask::Reference const pTopTask (new TopTask (this));
+    pTopTask->schedule ();
 }
 
 

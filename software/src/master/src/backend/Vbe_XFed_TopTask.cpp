@@ -55,7 +55,9 @@ void Vbe::XFed::TopTask::MetaMaker () {
  **************************
  **************************/
 
-Vbe::XFed::TopTask::TopTask (CallAgent *pCallAgent) : BaseClass (0,0), m_pCallAgent (pCallAgent) {
+Vbe::XFed::TopTask::TopTask (
+    CallAgent *pCallAgent
+) : BaseClass (0,0), m_pCallAgent (pCallAgent), m_pContinuation (&ThisClass::InvokeMessage) {
 }
 
 /*************************
@@ -74,10 +76,23 @@ Vbe::XFed::TopTask::~TopTask () {
  *******************/
 
 #if 0
-bool Vbe::XFed::TopTask::datumAvailable_ () const {
+bool Vbe::XFed::TopTask::datumAvailable_() const {
     return false;
 }
 #endif
+
+
+/***************************
+ ***************************
+ *****  Continuations  *****
+ ***************************
+ ***************************/
+
+void Vbe::XFed::TopTask::InvokeMessage () {
+}
+
+void Vbe::XFed::TopTask::ReturnResults () {
+}
 
 
 /***********************
@@ -91,6 +106,35 @@ bool Vbe::XFed::TopTask::datumAvailable_ () const {
  *****************/
 
 void Vbe::XFed::TopTask::run () {
+    switch (m_xStage) {
+    case Stage_Unrun:
+	if (pausedOnEntry ())
+	    return;
+	/*****  NO BREAK  *****/
+
+    case Stage_Entry:
+	m_xStage = Stage_Running;
+	/*****  NO BREAK  *****/
+
+    case Stage_Running:
+	while (runnable ()) {
+	    if (m_pContinuation) {
+		Continuation pContinuation = m_pContinuation;
+		m_pContinuation = NilOf (Continuation);
+
+		(this->*pContinuation) ();
+	    }
+	    else if (pausedOnExit ())
+		return;
+	    else
+		exit ();
+	}
+	break;
+
+    default:
+	exit ();
+	break;
+    }
 }
 
 /*************************************

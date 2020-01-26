@@ -20,11 +20,20 @@
 namespace Vbe {
     namespace XFed {
 
+        class CallAgent;
+
     /**************************************
      *----  class Vbe::XFed::TopTask  ----*
      **************************************/
         class TopTask : public VTopTaskBase {
             DECLARE_CONCRETE_RTT (TopTask, VTopTaskBase);
+
+        //  Aliases
+        public:
+            typedef void (ThisClass::*Continuation) ();
+
+        //  Friends
+            friend class CallAgent;
 
         //  Meta Maker
         protected:
@@ -37,6 +46,11 @@ namespace Vbe {
         //  Destruction
         private:
             ~TopTask ();
+
+        //  Continuations
+        private:
+            void InvokeMessage ();
+            void ReturnResults ();
 
         //  Execution
         protected:
@@ -52,6 +66,7 @@ namespace Vbe {
         //  State
         private:
             CallAgent::Reference const m_pCallAgent;
+            Continuation m_pContinuation;
         };
 
     } // namespace XFed
