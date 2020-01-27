@@ -89,6 +89,8 @@ bool Vbe::XFed::TopTask::datumAvailable_() const {
  ***************************/
 
 void Vbe::XFed::TopTask::InvokeMessage () {
+    m_pContinuation = &ThisClass::ReturnResults;
+    m_pCallAgent->buildCall (this);
 }
 
 void Vbe::XFed::TopTask::ReturnResults () {
@@ -136,6 +138,17 @@ void Vbe::XFed::TopTask::run () {
 	break;
     }
 }
+
+/**********************************
+ **********************************
+ *****  Call Builder Helpers  *****
+ **********************************
+ **********************************/
+
+void Vbe::XFed::TopTask::commitCall (bool bIntensional) {
+    commitCall (bIntensional ? Return_Intension : Return_Value);
+}
+
 
 /*************************************
  *************************************

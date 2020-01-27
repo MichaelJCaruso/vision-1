@@ -25,6 +25,7 @@ namespace Vbe {
     namespace XFed {
 
         class Export;
+        class TopTask;
 
     /****************************************
      *----  class Vbe::XFed::CallAgent  ----*
@@ -54,6 +55,10 @@ namespace Vbe {
             //  Destruction
             protected:
                 ~Arg ();
+
+            //  Call Builder
+            public:
+                virtual void buildCall (TopTask *pTask) = 0;
 
             //  State
             protected:
@@ -179,6 +184,10 @@ namespace Vbe {
             void resume ();
 
             void finish ();
+
+        //  Call Builder
+        public:
+            void buildCall (TopTask *pTask);
 
         //  Implementation
         private:

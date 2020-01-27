@@ -65,6 +65,11 @@ private:
     ~Arg_() {
     }
 
+//  Call Builder
+public:
+    virtual void buildCall (TopTask *pTask) OVERRIDE {
+    }
+
 //  State
 private:
     pointer_data_t m_iPointerData;
@@ -305,11 +310,40 @@ void Vbe::XFed::CallAgent::finish () {
 }
 
 
-/****************************
- ****************************
- *****  Implementation  *****
- ****************************
- ****************************/
+/**************************
+ **************************
+ *****  Call Builder  *****
+ **************************
+ **************************/
+
+void Vbe::XFed::CallAgent::buildCall (TopTask *pTask) {
+//  Set up the call...
+    if (int const xKSI = SELECTOR_StringToKSI (messageName ()))
+        pTask->beginMessageCall (xKSI);
+    else {
+        pTask->beginMessageCall (messageName (), parameterCount ());
+    }
+
+//  ... get the recipient, ...
+    m_pSelf->buildCall (pTask);
+    pTask->commitRecipient ();
+
+//  ... get the parameters, ...
+    for (unsigned int xParameter = 0; xParameter < parameterCount (); xParameter++) {
+        m_apArgs[xParameter]->buildCall (pTask);
+        pTask->commitParameter ();
+    }
+
+//  ... and commit the call:
+    pTask->commitCall (intensional ());
+}
+
+
+/********************************
+ ********************************
+ *****  Exception Handlers  *****
+ ********************************
+ ********************************/
 
 bool Vbe::XFed::CallAgent::raiseTypeException (
     std::type_info const &rOriginatorType, std::type_info const &rUnexpectedType, char const *pWhere

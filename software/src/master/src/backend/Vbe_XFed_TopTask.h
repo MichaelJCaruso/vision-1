@@ -28,6 +28,9 @@ namespace Vbe {
         class TopTask : public VTopTaskBase {
             DECLARE_CONCRETE_RTT (TopTask, VTopTaskBase);
 
+        //  Friends
+            friend class CallAgent;
+
         //  Aliases
         public:
             typedef void (ThisClass::*Continuation) ();
@@ -55,6 +58,10 @@ namespace Vbe {
         //  Execution
         protected:
             virtual void run () OVERRIDE;
+
+        //  Call Builder Helpers
+        private:
+            void commitCall (bool bIntensional);
 
         //  Display and Description
         public:
