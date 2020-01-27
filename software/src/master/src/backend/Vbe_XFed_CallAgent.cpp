@@ -139,7 +139,7 @@ public:
 
 //  IClient Methods
 protected:
-    void OnError_(Vca::IError *pInterface, VString const &rMessage);
+    virtual void OnError_(Vca::IError *pInterface, VString const &rMessage) OVERRIDE;
 
 //  State
 private:
