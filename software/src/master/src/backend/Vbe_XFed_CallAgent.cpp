@@ -27,53 +27,19 @@
 #include "Vbe_XFed_TopTask.h"
 
 
-/***************************************
- ***************************************
- *****                             *****
- *****  Vbe::XFed::CallAgent::Arg  *****
- *****                             *****
- ***************************************
- ***************************************/
+/*****************************************
+ *****************************************
+ *****                               *****
+ *****  Vbe::XFed::CallAgent::Datum  *****
+ *****                               *****
+ *****************************************
+ *****************************************/
 
-Vbe::XFed::CallAgent::Arg::Arg (Vdd::Store *pStore ) : m_pStore (pStore) {
+Vbe::XFed::CallAgent::Datum::Datum () {
 }
 
-Vbe::XFed::CallAgent::Arg::~Arg () {
+Vbe::XFed::CallAgent::Datum::~Datum () {
 }
-
-
-/****************************************
- ****************************************
- *****                              *****
- *****  Vbe::XFed::CallAgent::Arg_  *****
- *****                              *****
- ****************************************
- ****************************************/
-
-template <typename pointer_data_t> class Vbe::XFed::CallAgent::Arg_ : public Arg {
-    DECLARE_CONCRETE_RTTLITE (Arg_<pointer_data_t>, Arg);
-
-//  Construction
-public:
-    Arg_(
-        Vdd::Store *pStore, pointer_data_t const &rPointerData
-    ) : BaseClass (pStore), m_iPointerData (rPointerData) {
-    }
-
-//  Destruction
-private:
-    ~Arg_() {
-    }
-
-//  Call Builder
-public:
-    virtual void buildCall (TopTask *pTask) OVERRIDE {
-    }
-
-//  State
-private:
-    pointer_data_t m_iPointerData;
-};
 
 
 /************************************************
@@ -156,13 +122,17 @@ private:
 void Vbe::XFed::CallAgent::SelfProvider::OnData (
     ISelfReferenceSink *pRole, object_reference_t xSelfReference
 ) {
-    m_pCallAgent->onSelf (new Arg_<object_reference_t>(m_pCallAgent->cluster (), xSelfReference));
+    m_pCallAgent->onSelf (
+        new /*Own*/Object<object_reference_t>(xSelfReference, m_pCallAgent->cluster ())
+    );
 }
 
 void Vbe::XFed::CallAgent::SelfProvider::OnData (
     ISelfReferenceArraySink *pRole, object_reference_array_t const &rSelfReferences
 ) {
-    m_pCallAgent->onSelf (new Arg_<object_reference_array_t>(m_pCallAgent->cluster (), rSelfReferences));
+    m_pCallAgent->onSelf (
+        new /*Own*/Object<object_reference_array_t>(rSelfReferences, m_pCallAgent->cluster ())
+    );
 }
 
 void Vbe::XFed::CallAgent::SelfProvider::OnError_(Vca::IError *pInterface, VString const &rMessage) {
@@ -221,19 +191,19 @@ Vbe::XFed::CallAgent::~CallAgent () {
 void Vbe::XFed::CallAgent::SetToInteger (
     IVSNFTaskImplementation *, unsigned int xArgument, i32_array_t const &rValue
 ) {
-    onArgument (xArgument, new Arg_<i32_array_t>(0, rValue));
+    onArgument (xArgument, new Datum_<i32_array_t>(rValue));
 }
 
 void Vbe::XFed::CallAgent::SetToDouble (
     IVSNFTaskImplementation *, unsigned int xArgument, f64_array_t const &rValue
 ) {
-    onArgument (xArgument, new Arg_<f64_array_t>(0, rValue));
+    onArgument (xArgument, new Datum_<f64_array_t>(rValue));
 }
 
 void Vbe::XFed::CallAgent::SetToVString (
     IVSNFTaskImplementation *, unsigned int xArgument, str_array_t const &rValue
 ) {
-    onArgument (xArgument, new Arg_<str_array_t>(0, rValue));
+    onArgument (xArgument, new Datum_<str_array_t>(rValue));
 }
 
 void Vbe::XFed::CallAgent::SetToObjects (
@@ -245,7 +215,7 @@ void Vbe::XFed::CallAgent::SetToObjects (
 void Vbe::XFed::CallAgent::SetToS2Integers (
     IVSNFTaskImplementation2 *pRole, unsigned int xArgument, i32_s2array_t const &rValue
 ) {
-    onArgument (xArgument, new Arg_<i32_s2array_t>(0, rValue));
+    onArgument (xArgument, new Datum_<i32_s2array_t>(rValue));
 }
 
 void Vbe::XFed::CallAgent::OnParameterError (
@@ -281,13 +251,13 @@ void Vbe::XFed::CallAgent::start () {
     resume ();
 }
 
-void Vbe::XFed::CallAgent::onArgument (unsigned int xArgument, Arg *pArg) {
-    if (xArgument < m_apArgs.cardinality () && m_apArgs[xArgument].setIfNil (pArg))
+void Vbe::XFed::CallAgent::onArgument (unsigned int xArgument, Datum *pDatum) {
+    if (xArgument < m_apArgs.cardinality () && m_apArgs[xArgument].setIfNil (pDatum))
         resume ();
 }
 
-void Vbe::XFed::CallAgent::onSelf (Arg *pArg) {
-    if (m_pSelf.setIfNil (pArg))
+void Vbe::XFed::CallAgent::onSelf (Datum *pDatum) {
+    if (m_pSelf.setIfNil (pDatum))
         resume ();
 }
 

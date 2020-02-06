@@ -41,35 +41,90 @@ namespace Vbe {
             typedef Vxa::IVSNFTaskImplementation3NC ICallImplementation;
             typedef Vxa::Selector Selector;
 
-        /*********************************************
-         *----  class Vbe::XFed::CallAgent::Arg  ----*
-         *********************************************/
+        /***********************************************
+         *----  class Vbe::XFed::CallAgent::Datum  ----*
+         ***********************************************/
         public:
-            class Arg : public VBenderenceable {
-                DECLARE_ABSTRACT_RTTLITE (Arg, VBenderenceable);
+            class Datum : public VBenderenceable {
+                DECLARE_ABSTRACT_RTTLITE (Datum, VBenderenceable);
 
             //  Construction
             protected:
-                Arg (Vdd::Store *pStore);
+                Datum ();
 
             //  Destruction
             protected:
-                ~Arg ();
+                ~Datum ();
 
             //  Call Builder
             public:
                 virtual void buildCall (TopTask *pTask) = 0;
+            };
+
+        /****************************************************************
+         *====  template <typename data_t> class Vbe::XFed::Datum_  ----*
+         ****************************************************************/
+        public:
+            template <typename pointer_data_t> class Datum_ : public Datum {
+                DECLARE_CONCRETE_RTTLITE (Datum_<pointer_data_t>, Datum);
+
+            //  Construction
+            public:
+                Datum_(
+                    pointer_data_t const &rPointerData
+                ) : m_iPointerData (rPointerData) {
+                }
+
+            //  Destruction
+            protected:
+                ~Datum_() {
+                }
+
+            //  Call Builder
+            public:
+                virtual void buildCall (TopTask *pTask) OVERRIDE {
+                }
+
+            //  State
+            private:
+                pointer_data_t m_iPointerData;
+            };
+
+        /*************************************
+         *====  class Vbe::XFed::Object  ----*
+         *************************************/
+        public:
+            template <typename pointer_data_t> class Object : public Datum_<pointer_data_t> {
+                DECLARE_CONCRETE_RTTLITE (Object, Datum_<pointer_data_t>);
+
+            //  Construction
+            public:
+                Object (
+                    pointer_data_t const &rPointerData, Vdd::Store *pStore
+                ) : BaseClass (rPointerData), m_pStore (pStore) {
+                }
+
+            //  Destruction
+            protected:
+                ~Object () {
+                }
 
             //  State
             protected:
                 Vdd::Store::Reference const m_pStore;
             };
 
-        //  template <typename data_t> class Arg_
-        public:
-            template <typename data_t> class Arg_;
+        /****************************************
+         *====  class Vbe::XFed::OwnObject  ----*
+         ****************************************/
 
-        //  class SelfProvider;
+        /*****************************************
+         *====  class Vbe::XFed::PeerObject  ----*
+         *****************************************/
+
+        /********************************************
+         *====  class Vbe::XFed::SelfProvider_  ----*
+         ********************************************/
         public:
             class SelfProvider;
             friend class SelfProvider;
@@ -172,8 +227,8 @@ namespace Vbe {
         private:
             void start ();
 
-            void onArgument (unsigned int xArgument, Arg *pArg);
-            void onSelf (Arg *pArg);
+            void onArgument (unsigned int xArgument, Datum *pDatum);
+            void onSelf (Datum *pDatum);
 
             void requestArgument (unsigned int xArgument);
             void requestSelf ();
@@ -214,8 +269,8 @@ namespace Vbe {
             bool                   const m_bIntensional;
             bool                 mutable m_bGoodToGo;
             cardinality_t                m_cSuspensions;
-            Arg::Reference               m_pSelf;
-            VkDynamicArrayOf<Arg::Reference> m_apArgs;
+            Datum::Reference             m_pSelf;
+            VkDynamicArrayOf<Datum::Reference> m_apArgs;
         };
 
     } // namespace XFed
