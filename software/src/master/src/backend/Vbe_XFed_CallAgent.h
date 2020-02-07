@@ -244,6 +244,10 @@ namespace Vbe {
         public:
             void buildCall (TopTask *pTask);
 
+        //  Result Return
+        public:
+            void sendOutput (VkDynamicArrayOf<VString> const &rOutput) const;
+
         //  Implementation
         private:
             bool raiseTypeException (

@@ -90,10 +90,30 @@ bool Vbe::XFed::TopTask::datumAvailable_() const {
 
 void Vbe::XFed::TopTask::InvokeMessage () {
     m_pContinuation = &ThisClass::ReturnResults;
+    pushOutputDiversion ();
     m_pCallAgent->buildCall (this);
 }
 
 void Vbe::XFed::TopTask::ReturnResults () {
+    if (getOutputBuffer ()->hasOutput ()) {
+    //  Step 1/3: Get the output...
+        char *const pOutput = reinterpret_cast<char*>(
+            allocate (outputBufferCharacterCount ('\0'))
+        );
+        popOutputDiversion (pOutput, '\0');
+
+    //  Step 2/3: Repackage it for Vxa...
+        VkDynamicArrayOf<VString> aStrings (cardinality ());
+        char *pTarget = pOutput;
+        for (unsigned int xString = 0; xString < aStrings.cardinality (); xString++) {
+            size_t const sTarget = strlen (pTarget);
+            aStrings[xString].setTo (pTarget, sTarget);
+            pTarget += sTarget;
+        }
+
+    //  Step 3/3: And send it along...
+        m_pCallAgent->sendOutput (aStrings);
+    }
 }
 
 

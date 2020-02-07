@@ -309,6 +309,17 @@ void Vbe::XFed::CallAgent::buildCall (TopTask *pTask) {
 }
 
 
+/***************************
+ ***************************
+ *****  Result Return  *****
+ ***************************
+ ***************************/
+
+void Vbe::XFed::CallAgent::sendOutput (VkDynamicArrayOf<VString> const &rOutput) const {
+    m_pCaller->SetOutput (rOutput);
+}
+
+
 /********************************
  ********************************
  *****  Exception Handlers  *****
