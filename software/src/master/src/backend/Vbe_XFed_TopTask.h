@@ -60,7 +60,8 @@ namespace Vbe {
             virtual void run () OVERRIDE;
 
         //  Call Builder Helpers
-        private:
+        public:
+            using BaseClass::commitCall;
             void commitCall (bool bIntensional);
 
         //  Display and Description
