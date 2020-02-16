@@ -33,6 +33,10 @@
 class VByteCodeScanner;
 class VNumericBinary;
 class VfGuardTool;
+
+#include "Vxa_ICaller.h"
+#include "Vxa_ICollection.h"
+#include "Vxa_IVSNFTaskImplementation.h"
 
 
 /*************************
@@ -105,6 +109,22 @@ public:
     typedef Vdd::Store Store;
     typedef V::VString VString;
 
+//  Aliases
+public:
+    typedef Vxa::object_reference_t object_reference_t;
+    typedef Vxa::object_reference_array_t object_reference_array_t;
+
+
+    typedef Vxa::ICaller ICaller;
+    typedef Vxa::ICollection ICollection;
+    typedef Vxa::ISingleton ISingleton;
+
+    typedef Vxa::IVSNFTaskImplementation IVSNFTaskImplementation;
+
+//  Types
+public:
+    typedef void (VSNFTask::*Continuation) ();
+    typedef void (*GroundContinuation)(VSNFTask*);
 //  Meta Maker
 protected:
     static void MetaMaker ();
@@ -146,6 +166,10 @@ protected:
 
 //  Query
 public:
+    bool allSegmentsReceived () const {
+	return m_cSegmentsExpected == m_cSegmentsReceived;
+    }
+
     virtual bool atOrAbove (VCall const* pCall) const OVERRIDE;
     virtual bool atOrAbove (VTask const* pTask) const OVERRIDE;
     virtual bool atOrAbove (VComputationUnit const* pUnit) const OVERRIDE;
@@ -800,6 +824,53 @@ public:
 	char const* pPrefixString, VSelector const* pSelector, char const* pSuffixString
     ) const;
 
+//  External Result Return Support
+public:
+    void returnImplementationHandle (
+	IVSNFTaskImplementation *pImplementation, VkDynamicArrayOf<ISingleton::Reference> const &
+    );
+    void TurnBackSNFTask ();
+    void SetOutput (VkDynamicArrayOf<VString> const & );
+    void ContinueFromReturnError();
+
+//  External Result Return Helpers
+private:
+    VFragment *createSegment (object_reference_array_t const &rInjector);
+    bool       wrapupSegment ();
+    bool       wrapup ();
+
+    template <typename Source_T, typename Result_T> void ProcessArray (
+	VDescriptor &rResult, rtPTOKEN_Handle *pPPT, VkDynamicArrayOf<Source_T> const &rArray, Result_T const *&rpResultArray
+    ) const;
+    void ProcessObjects (
+	VDescriptor &rResult, rtPTOKEN_Handle *pPPT, ICollection *pCluster, object_reference_t sCluster, object_reference_array_t const &rxObjects
+    ) const;
+
+//  External Result Return
+public:
+    template <typename Source_T, typename Result_T> void ReturnArray (
+	VkDynamicArrayOf<Source_T> const &rSourceArray, Result_T const *&rpResultArray
+    );
+
+    template <typename Source_T, typename Result_T> bool ReturnSegment (
+	object_reference_array_t const &rInjector, VkDynamicArrayOf<Source_T> const &rSourceArray, Result_T const *&rpResultArray
+    );
+
+    template <typename Source_T> void ReturnSingleton (Source_T iSingleton);
+
+    bool ReturnNASegment (object_reference_array_t const &rInjector); // ... segment
+    void ReturnNA () {
+	loadDucWithNA ();
+    }
+
+    bool ReturnObjects (
+	object_reference_array_t const &rInjector, ICollection *pCluster, object_reference_t sCluster, object_reference_array_t const &rxObjects
+    );
+    void ReturnObjects (ICollection *pCluster, object_reference_t sCluster, object_reference_array_t const &rxObjects);
+    void ReturnObject (ICollection *pCluster, object_reference_t sCluster, object_reference_t xObject);
+
+    bool SetSegmentCountTo (unsigned int cSegments);
+
 //  State
 protected:
     VTaskDomain::Reference const	m_pDomain;
@@ -810,6 +881,8 @@ protected:
     VOutputBuffer::Reference		m_pOutputBuffer;
     VCall::Reference			m_pCuc;
     unsigned int			m_xNextParameter;
+    unsigned int                        m_cSegmentsExpected;
+    unsigned int                        m_cSegmentsReceived;
 };
 
 

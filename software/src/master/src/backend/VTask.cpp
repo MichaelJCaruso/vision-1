@@ -38,6 +38,7 @@
 
 #include "VFragment.h"
 #include "VNumericBinary.h"
+#include "VOutputGenerator.h"
 #include "V_VString.h"
 
 #include "VBoundCall.h"
@@ -46,6 +47,9 @@
 
 #include "VSymbol.h"
 #include "VSymbolImplementation.h"
+
+#include "Vxa_ICollection.h"
+#include "Vxa_IVSNFTaskImplementation.h"
 
 
 /***********************************
@@ -208,6 +212,8 @@ VTask::VTask (ConstructionData const &rTCData)
 , m_pOutputBuffer	(m_pCaller->m_pOutputBuffer)
 , m_xNextParameter	(rTCData.parameterCount ())
 , m_pCodSpace		(0)
+, m_cSegmentsExpected	(0)
+, m_cSegmentsReceived	(0)
 {
 //  Look for task size outliers, ...
     unsigned int taskSize = ptoken ()->cardinality ();
@@ -235,6 +241,8 @@ VTask::VTask (
 )
 , m_pOutputBuffer	(new VOutputBuffer (m_pDomain, pChannel))
 , m_xNextParameter	(0)
+, m_cSegmentsExpected	(0)
+, m_cSegmentsReceived	(0)
 , m_pCodSpace		(0)
 {
     m_pTemporalContext->retain ();
@@ -1525,3 +1533,289 @@ void VTask::issueWarningMessage (
     FAULT_RecordWarning (pBuffer);
     deallocate (pBuffer);
 }
+
+#if 1
+/********************************************
+ ********************************************
+ *****  External Result Return Helpers  *****
+ ********************************************
+ ********************************************/
+
+/*****************************************
+ *----  Polytype Segment Management  ----*
+ *****************************************/
+
+VFragment *VTask::createSegment (object_reference_array_t const &rInjector) {
+    rtLINK_CType *const pInjector = rtLINK_RefConstructor (ptoken ());
+    unsigned int const sInjector = rInjector.cardinality ();
+    if (sInjector > 0) {
+	unsigned int xRange = rInjector[0];
+	unsigned int sRange = 1;
+
+	for (unsigned int xElement = 1; xElement < sInjector; xElement++) {
+	    if (sRange + xRange == rInjector[xElement])
+		sRange++;
+	    else {
+		pInjector->AppendRange (xRange, sRange);
+		xRange = rInjector[xElement];
+		sRange = 1;
+	    }
+	}
+	if (sRange > 0)
+	    pInjector->AppendRange (xRange,sRange);
+    }
+    pInjector->Close (NewDomPToken (sInjector));
+
+    return (
+	0 == m_cSegmentsReceived++ ? loadDucWithFragmentation () : duc().contentAsFragmentation ()
+    ).createFragment (pInjector);
+}
+
+bool VTask::wrapupSegment () {
+    return allSegmentsReceived () && wrapup ();
+}
+
+bool VTask::wrapup () {
+    resume ();
+    return true;
+}
+
+bool VTask::SetSegmentCountTo (unsigned int cSegments) {
+    m_cSegmentsExpected = cSegments;
+    return wrapupSegment ();
+}
+
+/******************************************************
+ *----  VTask::ProcessArray<Source_T,Result_T> ----*
+ ******************************************************/
+
+template <typename Source_T, typename Result_T> void VTask::ProcessArray (
+    VDescriptor &rResult, rtPTOKEN_Handle *pPPT, VkDynamicArrayOf<Source_T> const &rSourceArray, Result_T const *&rpResultArray
+) const {
+    unsigned int const count = rSourceArray.cardinality ();
+    if(count==1) {
+	rResult.setToConstant (pPPT, codKOT (), static_cast<Result_T>(rSourceArray[0]));
+	rpResultArray = 0;
+    } else {
+	Result_T *pResultArray;
+	M_CPD *const pResultUV = NewUV (pPPT, pResultArray);
+	for (unsigned int xElement = 0; xElement<count; xElement++) {
+	    pResultArray[xElement] = static_cast<Result_T>(rSourceArray[xElement]);
+	}
+	rResult.setToMonotype (pResultUV);
+	pResultUV->release ();
+	rpResultArray = pResultArray;
+    }
+}
+template void VTask::ProcessArray<bool,int>           (VDescriptor&, rtPTOKEN_Handle*, VkDynamicArrayOf<bool> const&, int const*&) const;
+
+template void VTask::ProcessArray<char,int>           (VDescriptor&, rtPTOKEN_Handle*, VkDynamicArrayOf<char> const&, int const*&) const;
+template void VTask::ProcessArray<short,int>          (VDescriptor&, rtPTOKEN_Handle*, VkDynamicArrayOf<short> const&, int const*&) const;
+template void VTask::ProcessArray<int,int>            (VDescriptor&, rtPTOKEN_Handle*, VkDynamicArrayOf<int> const&, int const*&) const;
+
+template void VTask::ProcessArray<unsigned char,int>  (VDescriptor&, rtPTOKEN_Handle*, VkDynamicArrayOf<unsigned char> const&, int const*&) const;
+template void VTask::ProcessArray<unsigned short,int> (VDescriptor&, rtPTOKEN_Handle*, VkDynamicArrayOf<unsigned short> const&, int const*&) const;
+template void VTask::ProcessArray<unsigned int,int>   (VDescriptor&, rtPTOKEN_Handle*, VkDynamicArrayOf<unsigned int> const&, int const*&) const;
+
+template void VTask::ProcessArray<float,float>        (VDescriptor&, rtPTOKEN_Handle*, VkDynamicArrayOf<float> const&, float const*&) const;
+template void VTask::ProcessArray<double,double>      (VDescriptor&, rtPTOKEN_Handle*, VkDynamicArrayOf<double> const&, double const*&) const;
+
+
+static char const * DynamicArrayStringAccessFn(bool reset, va_list pArgs) {
+    V::VArgList iArgList (pArgs);
+
+    static VkDynamicArrayOf<V::VString> const  *pStrings;
+    static unsigned int xString;
+    if (reset) {
+        pStrings = iArgList.arg<VkDynamicArrayOf<V::VString> const*>();
+        xString = 0;
+    }
+    else if (xString < pStrings->cardinality())
+        return (*pStrings)[xString++];
+    return NilOf (char const*);
+}
+
+template<> void VTask::ProcessArray<V::VString,V::VString> (
+    VDescriptor &rResult, rtPTOKEN_Handle *pPPT, VkDynamicArrayOf<VString> const &rSourceArray, VString const *&rpResultArray
+) const {
+    rResult.setToCorrespondence (
+	pPPT, rtLSTORE_NewStringStore (
+            codScratchPad (), DynamicArrayStringAccessFn, &rSourceArray
+        )
+    );
+    rpResultArray = 0;
+}
+
+template<> void VTask::ProcessArray<Vxa::ISingleton::Reference,Vxa::ISingleton::Reference> (
+    VDescriptor &rResult, rtPTOKEN_Handle *pPPT, VkDynamicArrayOf<Vxa::ISingleton::Reference> const &rSourceArray, Vxa::ISingleton::Reference const *&rpResultArray
+) const {
+    unsigned int const count = rSourceArray.cardinality ();
+    if (count==1) {
+//	loadDucWithRepresentative (new VExternalGroundStore (rSourceArray[0]));
+	VExternalGroundStore::Reference const pXGS (new VExternalGroundStore (rSourceArray[0]));
+	rtVSTORE_Handle::Reference pSurrogate;
+	pXGS->getSurrogate (pSurrogate);
+
+	// Return reference to object
+	rResult.setToReferenceConstant (pPPT, pSurrogate, pXGS->ptoken_(), 0);
+    } else {
+	VFragmentation &rFragmentation = loadDucWithFragmentation ();
+	for (unsigned int xElement=0; xElement<count; xElement++) {
+            // Create a task subset of "1"
+	    rtLINK_CType *const pSubset = rtLINK_RefConstructor (pPPT);
+	    pSubset->AppendRange(xElement,1);
+	    rtPTOKEN_Handle::Reference pSubsetDomain (NewDomPToken (1));
+	    pSubset->Close (pSubsetDomain);
+
+            // Create the external ground store
+	    VExternalGroundStore::Reference const pXGS (new VExternalGroundStore (rSourceArray[xElement]));
+	    rtVSTORE_Handle::Reference pSurrogate;
+	    pXGS->getSurrogate (pSurrogate);
+
+            // Return reference to object
+	    rFragmentation.createFragment (pSubset)->datum ().setToReferenceConstant (
+		pSubsetDomain, pSurrogate, pXGS->ptoken_(), 0
+	    );
+        }
+    }
+    rpResultArray = 0;
+}
+
+
+/*****************************************************
+ *----  VTask::ReturnArray<Source_T,Result_T> ----*
+ *****************************************************/
+
+template <typename Source_T, typename Result_T> void VTask::ReturnArray (
+    VkDynamicArrayOf<Source_T> const &rSourceArray, Result_T const *&rpResultArray
+) {
+    ProcessArray (duc (), ptoken (), rSourceArray, rpResultArray);
+    wrapup ();
+}
+template void VTask::ReturnArray<bool,int>          (VkDynamicArrayOf<bool> const&, int const*&);
+
+template void VTask::ReturnArray<char,int>          (VkDynamicArrayOf<char> const&, int const*&);
+template void VTask::ReturnArray<short,int>         (VkDynamicArrayOf<short> const&, int const*&);
+template void VTask::ReturnArray<int,int>           (VkDynamicArrayOf<int> const&,int const*&);
+
+template void VTask::ReturnArray<unsigned char,int> (VkDynamicArrayOf<unsigned char> const&, int const*&);
+template void VTask::ReturnArray<unsigned short,int>(VkDynamicArrayOf<unsigned short> const&, int const*&);
+template void VTask::ReturnArray<unsigned int,int>  (VkDynamicArrayOf<unsigned int> const&, int const*&);
+
+template void VTask::ReturnArray<float,float>       (VkDynamicArrayOf<float> const&,float const*&);
+template void VTask::ReturnArray<double,double>     (VkDynamicArrayOf<double> const&,double const*&);
+
+template void VTask::ReturnArray<V::VString,V::VString> (VkDynamicArrayOf<VString> const&,VString const*&);
+
+template void VTask::ReturnArray<Vxa::ISingleton::Reference,Vxa::ISingleton::Reference>(
+    VkDynamicArrayOf<Vxa::ISingleton::Reference> const&,Vxa::ISingleton::Reference const*&
+);
+
+
+/*******************************************************
+ *----  VTask::ReturnSegment<Source_T,Result_T> ----*
+ *******************************************************/
+
+template <typename Source_T, typename Result_T> bool VTask::ReturnSegment (
+    object_reference_array_t const &rInjector, VkDynamicArrayOf<Source_T> const &rSourceArray, Result_T const *&rpResultArray
+) {
+    VFragment *const pFragment = createSegment (rInjector);
+    ProcessArray (pFragment->datum (), pFragment->subset ()->PPT (), rSourceArray, rpResultArray);
+    return wrapupSegment ();
+}
+template bool VTask::ReturnSegment<bool,int>           (object_reference_array_t const &rInjector, VkDynamicArrayOf<bool> const&, int const*&);
+
+template bool VTask::ReturnSegment<char,int>           (object_reference_array_t const &rInjector, VkDynamicArrayOf<char> const&, int const*&);
+template bool VTask::ReturnSegment<short,int>          (object_reference_array_t const &rInjector, VkDynamicArrayOf<short> const&, int const*&);
+template bool VTask::ReturnSegment<int,int>            (object_reference_array_t const &rInjector, VkDynamicArrayOf<int> const&, int const*&);
+
+template bool VTask::ReturnSegment<unsigned char,int>  (object_reference_array_t const &rInjector, VkDynamicArrayOf<unsigned char> const&, int const*&);
+template bool VTask::ReturnSegment<unsigned short,int> (object_reference_array_t const &rInjector, VkDynamicArrayOf<unsigned short> const&, int const*&);
+template bool VTask::ReturnSegment<unsigned int,int>   (object_reference_array_t const &rInjector, VkDynamicArrayOf<unsigned int> const&, int const*&);
+
+template bool VTask::ReturnSegment<double,double>      (object_reference_array_t const &rInjector, VkDynamicArrayOf<double> const&, double const*&);
+template bool VTask::ReturnSegment<float,float>        (object_reference_array_t const &rInjector, VkDynamicArrayOf<float> const&, float const*&);
+
+template bool VTask::ReturnSegment<V::VString,V::VString>    (object_reference_array_t const &rInjector, VkDynamicArrayOf<VString> const&, VString const*&);
+
+
+/************************************************
+ *----  VTask::ReturnSingleton<Source_T> ----*
+ ************************************************/
+
+template <typename Source_T> void VTask::ReturnSingleton (Source_T iSingleton) {
+    loadDucWith (iSingleton);
+    wrapup ();
+}
+template void VTask::ReturnSingleton<int>         (int);
+template void VTask::ReturnSingleton<double>      (double);
+template void VTask::ReturnSingleton<float>       (float);
+template void VTask::ReturnSingleton<char const*> (char const*);
+
+
+/***************************************
+ *----  VTask::ReturnNASegment  ----*
+ ***************************************/
+
+bool VTask::ReturnNASegment (object_reference_array_t const &rInjector) {
+    VFragment *const pFragment = createSegment (rInjector);
+    pFragment->datum ().setToNA (pFragment->subset ()->PPT (), codKOT ());
+    return wrapupSegment ();
+}
+
+/***************************************
+ *----  VTask::ReturnObject(s)  ----*
+ ***************************************/
+
+void VTask::ProcessObjects (
+    VDescriptor &rResult, rtPTOKEN_Handle *pPPT, ICollection *pCluster, object_reference_t sCluster, object_reference_array_t const &rxObjects
+) const {
+    VExternalGroundStore::Reference const pXGS (new VExternalGroundStore (codSpace (), pCluster, sCluster));
+    rtVSTORE_Handle::Reference pSurrogate;
+    pXGS->getSurrogate (pSurrogate);
+
+    unsigned int const count = rxObjects.cardinality ();
+    if (count == 1) {
+//	loadDucWithRepresentative (pXGS, rxObjects[0]);
+	rResult.setToReferenceConstant (pPPT, pSurrogate, pXGS->ptoken_(), rxObjects[0]);
+    } else {
+	M_CPD *const pResultUV = rtREFUV_New (pPPT, pXGS->ptoken_());
+	rtREFUV_ElementType *const pResultArray = rtREFUV_CPD_Array (pResultUV);
+	for (unsigned int xElement = 0; xElement<count; xElement++) {
+	    pResultArray[xElement] = rxObjects[xElement];
+	}
+	rResult.setToMonotype (pSurrogate, pResultUV);
+	pResultUV->release ();
+    }
+}
+
+bool VTask::ReturnObjects (
+    object_reference_array_t const &rInjector, ICollection *pCluster, object_reference_t sCluster, object_reference_array_t const &rxObjects
+) {
+    VFragment *const pFragment = createSegment (rInjector);
+    ProcessObjects (pFragment->datum (), pFragment->subset ()->PPT (), pCluster, sCluster, rxObjects);
+    return wrapupSegment ();
+}
+
+void VTask::ReturnObjects (ICollection *pCluster, object_reference_t sCluster, object_reference_array_t const &rxObjects) {
+    ProcessObjects (duc (), ptoken (), pCluster, sCluster, rxObjects);
+    wrapup ();
+}
+
+void VTask::ReturnObject (ICollection *pCluster, object_reference_t sCluster, object_reference_t xObject) {
+    loadDucWithRepresentative (new VExternalGroundStore (codSpace (), pCluster, sCluster), xObject);
+    wrapup ();
+}
+
+/*******************
+ *----  Other  ----*
+ *******************/
+
+void VTask::SetOutput (VkDynamicArrayOf<VString> const & rArray){
+    VOutputGenerator iOutputGenerator (this);
+    for(unsigned int xElement=0; xElement< rArray.cardinality (); xElement++) {
+        iOutputGenerator.putString (rArray[xElement]);
+        iOutputGenerator.advance ();
+    }
+}
+#endif

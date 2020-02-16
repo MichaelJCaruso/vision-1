@@ -93,8 +93,6 @@ VSNFTask::VSNFTask (ConstructionData const& rTCData, unsigned int const iSkipCou
 , m_iSkipCount		(iSkipCount)
 , m_pContinuation	(&VSNFTask::DelegateToRecipient)
 , m_pGroundContinuation	(0)
-, m_cSegmentsExpected	(0)
-, m_cSegmentsReceived	(0)
 , m_bRunning		(false)
 {
 }
@@ -384,7 +382,7 @@ void VSNFTask::returnImplementationHandle (
     m_pSNFTaskImplementation = pImplementation;
 }
 
-
+#if 0
 /********************************************
  ********************************************
  *****  External Result Return Helpers  *****
@@ -427,6 +425,8 @@ bool VSNFTask::wrapupSegment () {
 
 bool VSNFTask::wrapup () {
     dismiss ();
+    return BaseClass::wrapup ();
+    
     resume ();
     return true;
 }
@@ -687,3 +687,4 @@ void VSNFTask::TurnBackSNFTask () {
     loadDucWithNA ();
     wrapup ();
 }
+#endif

@@ -98,10 +98,6 @@ private:
 
 //  Query
 public:
-    bool allSegmentsReceived () const {
-	return m_cSegmentsExpected == m_cSegmentsReceived;
-    }
-
     virtual bool datumAlterable_ () const OVERRIDE;
 
 //  Access
@@ -166,10 +162,10 @@ public:
 	IVSNFTaskImplementation *pImplementation, VkDynamicArrayOf<ISingleton::Reference> const &
     );
     void TurnBackSNFTask ();
-    void SetOutput (VkDynamicArrayOf<VString> const & );
     void ContinueFromReturnError();
 
 //  External Result Return Helpers
+#if 1
 private:
     VFragment *createSegment (object_reference_array_t const &rInjector);
     bool       wrapupSegment ();
@@ -206,9 +202,10 @@ public:
     void ReturnObject (ICollection *pCluster, object_reference_t sCluster, object_reference_t xObject);
 
     void ReturnError (const VString &rMessage);
+    void SetOutput (VkDynamicArrayOf<VString> const & );
 
     bool SetSegmentCountTo (unsigned int cSegments);
-
+#endif
 //  State
 private:
     VCachedArray<VDescriptor,1> m_iParameters;
